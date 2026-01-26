@@ -1,538 +1,240 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>N54 Engine Miles</title>
 
-  <title>N54 Mileage Tracker</title>
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" type="image/png" href="icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-  <!-- PWA / iOS icon -->
-  <link rel="apple-touch-icon" href="icon.png">
-  <link rel="icon" type="image/png" href="icon.png">
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,system-ui;
+  background:#000;
+  color:#fff;
+  overflow:hidden;
+}
 
-  <!-- PWA-ish -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+/* background */
+.bg{
+  position:fixed;
+  inset:0;
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.85)),
+    repeating-linear-gradient(45deg,#111 0,#111 8px,#0a0a0a 8px,#0a0a0a 16px);
+  z-index:-2;
+}
 
-  <style>
-    :root{
-      --bg:#050607;
-      --card: rgba(255,255,255,.06);
-      --card2: rgba(255,255,255,.045);
-      --stroke: rgba(255,255,255,.08);
-      --text: rgba(255,255,255,.92);
-      --muted: rgba(255,255,255,.62);
-      --red:#e33b3b;
-      --red2:#b41f1f;
-      --shadow: 0 18px 50px rgba(0,0,0,.55);
-      --radius: 18px;
-    }
+/* splash */
+.splash{
+  position:fixed;
+  inset:0;
+  background:#000;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:99;
+}
+.splash img{
+  width:160px;
+  animation:fade 1.6s ease forwards;
+}
+@keyframes fade{
+  0%{opacity:0;transform:scale(.9)}
+  100%{opacity:1;transform:scale(1)}
+}
 
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; }
-    body{
-      margin:0;
-      font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
-      color:var(--text);
-      background: var(--bg);
-      overflow-x:hidden;
-    }
+/* main layout */
+.wrap{
+  max-width:420px;
+  margin:0 auto;
+  padding:22px;
+}
 
-    /* Carbon-ish background */
-    .bg{
-      position:fixed;
-      inset:0;
-      background:
-        radial-gradient(1200px 900px at 50% -100px, rgba(255,255,255,.10), transparent 60%),
-        radial-gradient(900px 600px at 10% 20%, rgba(255,0,0,.06), transparent 55%),
-        radial-gradient(900px 700px at 90% 40%, rgba(255,255,255,.07), transparent 55%),
-        linear-gradient(180deg, rgba(255,255,255,.06), transparent 35%),
-        repeating-linear-gradient(135deg,
-          rgba(255,255,255,.03) 0px,
-          rgba(255,255,255,.03) 7px,
-          rgba(0,0,0,.02) 7px,
-          rgba(0,0,0,.02) 14px);
-      filter: contrast(1.05) saturate(1.05);
-    }
-    .bg:after{
-      content:"";
-      position:absolute;
-      inset:0;
-      background: radial-gradient(700px 700px at 50% 100%, rgba(0,0,0,.75), transparent 60%);
-      pointer-events:none;
-    }
+.logo{
+  display:block;
+  margin:18px auto 18px;
+  width:180px;
+  filter:drop-shadow(0 10px 25px rgba(0,0,0,.7));
+}
 
-    .wrap{
-      position:relative;
-      min-height:100%;
-      padding: 22px 16px calc(26px + env(safe-area-inset-bottom));
-      display:flex;
-      justify-content:center;
-    }
+/* cards */
+.card{
+  background:rgba(255,255,255,.05);
+  border-radius:18px;
+  padding:20px;
+  box-shadow:0 20px 50px rgba(0,0,0,.7);
+  margin-bottom:18px;
+}
 
-    .panel{
-      width: min(420px, 100%);
-      padding-top: 10px;
-    }
+.center{text-align:center}
+.label{opacity:.75;font-size:14px}
+.big{
+  font-size:48px;
+  font-weight:800;
+  letter-spacing:.5px;
+}
+.unit{opacity:.6;font-size:14px}
+.redline{
+  height:2px;
+  background:#e53935;
+  margin:10px 0;
+}
 
-    /* Top logo badge */
-    .logo{
-      width: 230px;
-      max-width: 70%;
-      margin: 8px auto 14px;
-      display:block;
-      filter: drop-shadow(0 10px 25px rgba(0,0,0,.6));
-      border-radius: 14px;
-    }
+/* grid tiles */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+}
 
-    /* Main miles card */
-    .mainCard{
-      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
-      border: 1px solid var(--stroke);
-      border-radius: 22px;
-      padding: 18px 18px 16px;
-      box-shadow: var(--shadow);
-      position:relative;
-      overflow:hidden;
-    }
-    .mainCard:before{
-      content:"";
-      position:absolute;
-      left:-40%;
-      right:-40%;
-      top: 58%;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, rgba(227,59,59,.85), transparent);
-      filter: blur(.2px);
-    }
+.tile{
+  background:rgba(255,255,255,.04);
+  border-radius:16px;
+  padding:14px;
+  text-align:center;
+}
 
-    .label{
-      text-align:center;
-      color: var(--muted);
-      font-size: 14px;
-      letter-spacing:.2px;
-      margin-bottom: 6px;
-    }
-    .milesRow{
-      display:flex;
-      align-items: baseline;
-      justify-content:center;
-      gap: 10px;
-    }
-    .bigMiles{
-      font-size: 56px;
-      font-weight: 800;
-      line-height: 1;
-      letter-spacing: .5px;
-      text-shadow: 0 10px 30px rgba(0,0,0,.55);
-      font-variant-numeric: tabular-nums;
-      cursor:pointer;
-    }
-    .unit{
-      color: var(--muted);
-      font-weight: 700;
-      margin-top: 22px;
-      font-size: 16px;
-    }
-    .sub{
-      text-align:center;
-      margin-top: 8px;
-      color: rgba(255,255,255,.72);
-      font-size: 14px;
-      font-variant-numeric: tabular-nums;
-    }
+.icon{
+  width:30px;
+  height:30px;
+  margin:0 auto 6px;
+  background-size:30px;
+  background-repeat:no-repeat;
+  background-position:center;
+}
 
-    /* 3 stat tiles */
-    .grid3{
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin: 12px 0 14px;
-    }
-    .tile{
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border: 1px solid var(--stroke);
-      border-radius: 18px;
-      padding: 12px 10px 10px;
-      box-shadow: 0 14px 34px rgba(0,0,0,.40);
-      text-align:center;
-      min-height: 84px;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-    }
-    .tile .tLabel{
-      color: rgba(255,255,255,.72);
-      font-size: 12px;
-      margin-bottom: 6px;
-    }
-    .tile .tVal{
-      font-weight: 800;
-      font-size: 20px;
-      font-variant-numeric: tabular-nums;
-    }
-    .tile .tUnit{
-      font-size: 12px;
-      color: rgba(255,255,255,.55);
-      margin-top: 2px;
-    }
+/* inline SVG icons */
+.clock{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' stroke='%23fff' fill='none' stroke-width='1.7' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v6l4 2'/%3E%3C/svg%3E")}
+.pin{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' stroke='%23fff' fill='none' stroke-width='1.7' viewBox='0 0 24 24'%3E%3Cpath d='M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11z'/%3E%3Ccircle cx='12' cy='10' r='2'/%3E%3C/svg%3E")}
+.gauge{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' stroke='%23fff' fill='none' stroke-width='1.7' viewBox='0 0 24 24'%3E%3Cpath d='M6 15a8 8 0 1 1 12 0'/%3E%3Cpath d='M12 13l3-3'/%3E%3C/svg%3E")}
 
-    /* Big red start button */
-    .startWrap{
-      margin: 14px 0 14px;
-    }
-    .startBtn{
-      width: 100%;
-      padding: 18px 18px;
-      border: none;
-      border-radius: 999px;
-      font-size: 20px;
-      font-weight: 900;
-      letter-spacing: .6px;
-      color: white;
-      background: linear-gradient(180deg, var(--red), var(--red2));
-      box-shadow: 0 20px 55px rgba(227,59,59,.25), 0 12px 30px rgba(0,0,0,.55);
-      cursor:pointer;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap: 10px;
-      text-transform: uppercase;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .startBtn:active{ transform: translateY(1px); }
+/* buttons */
+.mainBtn{
+  width:100%;
+  padding:18px;
+  margin:20px 0 14px;
+  border:none;
+  border-radius:30px;
+  background:linear-gradient(#ff4b4b,#c62828);
+  color:#fff;
+  font-size:20px;
+  font-weight:800;
+}
 
-    /* Action buttons row */
-    .gridActions{
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-top: 10px;
-    }
-    .actionBtn{
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border: 1px solid var(--stroke);
-      border-radius: 18px;
-      padding: 12px 10px;
-      box-shadow: 0 14px 34px rgba(0,0,0,.35);
-      color: rgba(255,255,255,.88);
-      font-weight: 800;
-      font-size: 12px;
-      text-align:center;
-      cursor:pointer;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .actionBtn:active{ transform: translateY(1px); }
-    .hint{
-      text-align:center;
-      margin-top: 10px;
-      color: rgba(255,255,255,.45);
-      font-size: 12px;
-    }
+.rowBtns{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+}
+.smallBtn{
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  border:none;
+  padding:12px;
+  border-radius:16px;
+  font-size:13px;
+}
 
-    /* Splash overlay (simple, real iOS startup images are optional later) */
-    .splash{
-      position:fixed;
-      inset:0;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background: #050607;
-      z-index:9999;
-      transition: opacity .35s ease;
-    }
-    .splash.hide{ opacity:0; pointer-events:none; }
-    .splash img{
-      width: 260px;
-      max-width: 70%;
-      filter: drop-shadow(0 18px 50px rgba(0,0,0,.7));
-      border-radius: 16px;
-    }
-  </style>
+.footer{
+  text-align:center;
+  opacity:.5;
+  font-size:12px;
+  margin-top:10px;
+}
+</style>
 </head>
 
 <body>
-  <div class="bg"></div>
+<div class="bg"></div>
 
-  <!-- splash screen -->
-  <div class="splash" id="splash">
-    <img src="icon.png" alt="N54">
+<div class="splash" id="splash">
+  <img src="icon.png">
+</div>
+
+<div class="wrap">
+
+<img src="icon.png" class="logo">
+
+<div class="card center">
+  <div class="label">Current Engine Miles</div>
+  <div class="big" id="engineMiles">0</div>
+  <div class="unit">miles</div>
+  <div class="redline"></div>
+  <div class="label">Trip Miles: <span id="tripMiles">0.0</span></div>
+</div>
+
+<div class="grid">
+  <div class="tile">
+    <div class="icon clock"></div>
+    <div class="label">Total Runtime</div>
+    <div id="runtime">00:00:00</div>
   </div>
-
-  <div class="wrap">
-    <div class="panel">
-      <img class="logo" src="icon.png" alt="N54 Logo">
-
-      <div class="mainCard">
-        <div class="label">Current Engine Miles</div>
-
-        <div class="milesRow">
-          <div class="bigMiles" id="engineMiles" title="Tap to set">0</div>
-          <div class="unit">miles</div>
-        </div>
-
-        <div class="sub">Trip Miles: <span id="sessionMiles">0.0</span></div>
-      </div>
-
-      <div class="grid3">
-        <div class="tile">
-          <div class="tLabel">Total Runtime</div>
-          <div class="tVal" id="totalRuntime">00:00:00</div>
-          <div class="tUnit">hh:mm:ss</div>
-        </div>
-        <div class="tile">
-          <div class="tLabel">Total Tracked Miles</div>
-          <div class="tVal"><span id="totalTracked">0.0</span></div>
-          <div class="tUnit">miles</div>
-        </div>
-        <div class="tile">
-          <div class="tLabel">Session Miles</div>
-          <div class="tVal"><span id="sessionMiles2">0.0</span></div>
-          <div class="tUnit">miles</div>
-        </div>
-      </div>
-
-      <div class="startWrap">
-        <button class="startBtn" id="btnStart">
-          ▶ <span id="btnText">START TRACKING</span>
-        </button>
-      </div>
-
-      <div class="gridActions">
-        <div class="actionBtn" id="btnSetExact">Adjust Miles</div>
-        <div class="actionBtn" id="btnAddSub">Add/Subtract</div>
-        <div class="actionBtn" id="btnClear">Clear All Data</div>
-      </div>
-
-      <div class="hint">Runs on your device. Saves to localStorage. No account.</div>
-    </div>
+  <div class="tile">
+    <div class="icon pin"></div>
+    <div class="label">Total Tracked</div>
+    <div><span id="totalTracked">0.0</span> mi</div>
   </div>
+  <div class="tile">
+    <div class="icon gauge"></div>
+    <div class="label">Session Miles</div>
+    <div><span id="sessionMiles">0.0</span> mi</div>
+  </div>
+</div>
 
-  <script>
-    // -------------------- storage --------------------
-    const KEY = "n54_engine_miles_v2";
+<button class="mainBtn" onclick="toggle()">▶ START TRACKING</button>
 
-    function load(){
-      try { return JSON.parse(localStorage.getItem(KEY) || "null"); }
-      catch { return null; }
-    }
-    function save(){
-      localStorage.setItem(KEY, JSON.stringify(state));
-    }
+<div class="rowBtns">
+  <button class="smallBtn" onclick="setMiles()">Adjust Miles</button>
+  <button class="smallBtn" onclick="addMiles()">Add/Subtract</button>
+  <button class="smallBtn" onclick="clearAll()">Clear All</button>
+</div>
 
-    // -------------------- state --------------------
-    const state = load() || {
-      engineMiles: 0,
-      totalTrackedMiles: 0,
-      totalRuntimeSec: 0,
+<div class="footer">Runs on your device · localStorage · no account</div>
+</div>
 
-      // current session (resets automatically when you start)
-      sessionMiles: 0,
-      sessionStartTs: null,
+<script>
+let miles = Number(localStorage.engineMiles||0);
+let total = Number(localStorage.totalTracked||0);
+let running=false, start;
 
-      // gps
-      tracking: false,
-      lastLat: null,
-      lastLon: null,
-      lastTime: null,
-      lastAcc: null
-    };
+engineMiles.textContent=miles;
 
-    // -------------------- UI elements --------------------
-    const elEngine = document.getElementById("engineMiles");
-    const elSession = document.getElementById("sessionMiles");
-    const elSession2 = document.getElementById("sessionMiles2");
-    const elTotalTracked = document.getElementById("totalTracked");
-    const elTotalRuntime = document.getElementById("totalRuntime");
-    const btnStart = document.getElementById("btnStart");
-    const btnText = document.getElementById("btnText");
+function toggle(){
+  if(!running){
+    running=true;
+    start=Date.now();
+  }else{
+    running=false;
+    let d=(Date.now()-start)/1000/3600*60;
+    miles+=d;
+    total+=d;
+    engineMiles.textContent=miles.toFixed(0);
+    localStorage.engineMiles=miles;
+    localStorage.totalTracked=total;
+  }
+}
 
-    // -------------------- helpers --------------------
-    function fmtMiles(n, decimals=1){
-      const x = Number(n || 0);
-      return x.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-    }
-    function fmtInt(n){
-      return Math.round(Number(n||0)).toLocaleString();
-    }
-    function fmtHMS(totalSec){
-      totalSec = Math.max(0, Math.floor(totalSec || 0));
-      const h = String(Math.floor(totalSec/3600)).padStart(2,"0");
-      const m = String(Math.floor((totalSec%3600)/60)).padStart(2,"0");
-      const s = String(totalSec%60).padStart(2,"0");
-      return `${h}:${m}:${s}`;
-    }
-    function haversineMiles(lat1, lon1, lat2, lon2){
-      const R = 6371000; // meters
-      const toRad = (d)=> d * Math.PI/180;
-      const dLat = toRad(lat2-lat1);
-      const dLon = toRad(lon2-lon1);
-      const a =
-        Math.sin(dLat/2)**2 +
-        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      const meters = R * c;
-      return meters / 1609.344;
-    }
+function setMiles(){
+  let v=prompt("Set engine miles:",miles);
+  if(v!==null){miles=Number(v);engineMiles.textContent=miles;localStorage.engineMiles=miles}
+}
+function addMiles(){
+  let v=prompt("Add/Subtract miles (+/-):",0);
+  if(v!==null){miles+=Number(v);engineMiles.textContent=miles;localStorage.engineMiles=miles}
+}
+function clearAll(){
+  if(confirm("Clear ALL data?")){
+    localStorage.clear();location.reload();
+  }
+}
 
-    function render(){
-      elEngine.textContent = fmtInt(state.engineMiles);
-      elSession.textContent = fmtMiles(state.sessionMiles, 1);
-      elSession2.textContent = fmtMiles(state.sessionMiles, 1);
-      elTotalTracked.textContent = fmtMiles(state.totalTrackedMiles, 1);
-      elTotalRuntime.textContent = fmtHMS(state.totalRuntimeSec);
-
-      btnText.textContent = state.tracking ? "STOP TRACKING" : "START TRACKING";
-      btnStart.style.background = state.tracking
-        ? "linear-gradient(180deg, #555, #222)"
-        : "linear-gradient(180deg, var(--red), var(--red2))";
-    }
-
-    // -------------------- splash hide --------------------
-    window.addEventListener("load", ()=>{
-      // small delay so it feels like a real splash
-      setTimeout(()=> document.getElementById("splash").classList.add("hide"), 700);
-    });
-
-    // -------------------- set miles (tap main number) --------------------
-    elEngine.addEventListener("click", ()=>{
-      const v = prompt("Set engine miles (exact):", String(Math.round(state.engineMiles || 0)));
-      if(v === null) return;
-      const n = Number(String(v).replace(/,/g,""));
-      if(!Number.isFinite(n) || n < 0){ alert("Enter a valid number."); return; }
-      state.engineMiles = Math.round(n);
-      save(); render();
-    });
-
-    // Buttons
-    document.getElementById("btnSetExact").addEventListener("click", ()=>{
-      const v = prompt("Set engine miles (exact):", String(Math.round(state.engineMiles || 0)));
-      if(v === null) return;
-      const n = Number(String(v).replace(/,/g,""));
-      if(!Number.isFinite(n) || n < 0){ alert("Enter a valid number."); return; }
-      state.engineMiles = Math.round(n);
-      save(); render();
-    });
-
-    document.getElementById("btnAddSub").addEventListener("click", ()=>{
-      const v = prompt("Add/Subtract miles (example: 100 or -25):", "0");
-      if(v === null) return;
-      const n = Number(String(v).replace(/,/g,""));
-      if(!Number.isFinite(n)){ alert("Enter a valid number."); return; }
-      state.engineMiles = Math.max(0, Math.round((state.engineMiles || 0) + n));
-      save(); render();
-    });
-
-    document.getElementById("btnClear").addEventListener("click", ()=>{
-      const ok = confirm("Clear ALL data? (This cannot be undone)");
-      if(!ok) return;
-
-      state.engineMiles = 0;
-      state.totalTrackedMiles = 0;
-      state.totalRuntimeSec = 0;
-      state.sessionMiles = 0;
-
-      // stop tracking too
-      stopTracking(true);
-
-      save(); render();
-    });
-
-    // -------------------- tracking --------------------
-    let watchId = null;
-    let runtimeTick = null;
-
-    function startTracking(){
-      if(state.tracking) return;
-
-      // reset the session automatically when you start (no reset button needed)
-      state.sessionMiles = 0;
-      state.sessionStartTs = Date.now();
-      state.lastLat = null;
-      state.lastLon = null;
-      state.lastTime = null;
-      state.lastAcc = null;
-
-      state.tracking = true;
-      save(); render();
-
-      if(!navigator.geolocation){
-        alert("GPS not available on this device.");
-        stopTracking(true);
-        return;
-      }
-
-      watchId = navigator.geolocation.watchPosition(
-        (pos)=>{
-          const { latitude, longitude, accuracy } = pos.coords;
-          const t = pos.timestamp || Date.now();
-
-          // ignore super-bad accuracy (prevents jumps)
-          if(Number.isFinite(accuracy) && accuracy > 60) return;
-
-          if(state.lastLat != null && state.lastLon != null){
-            const dist = haversineMiles(state.lastLat, state.lastLon, latitude, longitude);
-
-            // ignore tiny jitter + insane jumps
-            if(dist > 0.01 && dist < 2.0){
-              state.sessionMiles += dist;
-              state.totalTrackedMiles += dist;
-              state.engineMiles = Math.round((state.engineMiles || 0) + dist);
-
-              save(); render();
-            }
-          }
-
-          state.lastLat = latitude;
-          state.lastLon = longitude;
-          state.lastTime = t;
-          state.lastAcc = accuracy;
-          save();
-        },
-        (err)=>{
-          alert("GPS error: " + (err && err.message ? err.message : "unknown"));
-          stopTracking(true);
-        },
-        { enableHighAccuracy:true, maximumAge: 2000, timeout: 15000 }
-      );
-
-      runtimeTick = setInterval(()=>{
-        if(!state.tracking) return;
-        state.totalRuntimeSec += 1;
-        save(); render();
-      }, 1000);
-    }
-
-    function stopTracking(silent=false){
-      state.tracking = false;
-
-      if(watchId != null){
-        try { navigator.geolocation.clearWatch(watchId); } catch {}
-        watchId = null;
-      }
-      if(runtimeTick != null){
-        clearInterval(runtimeTick);
-        runtimeTick = null;
-      }
-
-      save(); render();
-      if(!silent) { /* no alert */ }
-    }
-
-    btnStart.addEventListener("click", ()=>{
-      if(state.tracking) stopTracking();
-      else startTracking();
-    });
-
-    // If it was tracking and you reload, we force it off (safer)
-    if(state.tracking){
-      state.tracking = false;
-      save();
-    }
-
-    render();
-  </script>
+setTimeout(()=>splash.style.display="none",1400);
+</script>
 </body>
 </html>
