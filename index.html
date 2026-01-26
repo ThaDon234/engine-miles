@@ -1,281 +1,262 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
-<title>N54 Engine Miles</title>
+  <title>N54 Mileage Tracker</title>
 
-<!-- PWA / iOS -->
-<link rel="apple-touch-icon" href="icon.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- PWA-ish -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#050607">
+  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="icon" type="image/png" href="icon.png">
 
-<style>
-:root{
-  --red:#e53935;
-  --dark:#0b0b0b;
-  --card:rgba(255,255,255,.08);
-  --glass:rgba(255,255,255,.12);
-}
+  <style>
+    :root{
+      --bg0:#050607;
+      --bg1:#0b0e10;
+      --card: rgba(255,255,255,.06);
+      --card2: rgba(255,255,255,.075);
+      --stroke: rgba(255,255,255,.10);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.60);
+      --muted2: rgba(255,255,255,.45);
 
-*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-body{
-  margin:0;
-  background:#000;
-  color:#fff;
-  overflow:hidden;
-}
+      --red:#ff2a2a;
+      --red2:#c40012;
+      --shadow: 0 18px 45px rgba(0,0,0,.55);
+      --shadow2: 0 10px 25px rgba(0,0,0,.55);
+      --radius: 22px;
+    }
 
-/* background */
-.bg{
-  position:fixed;inset:0;
-  background:
-    linear-gradient(135deg,rgba(255,255,255,.04),transparent),
-    repeating-linear-gradient(135deg,#000 0,#000 6px,#111 6px,#111 12px);
-  z-index:-1;
-}
+    *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+      color:var(--text);
+      background: radial-gradient(1200px 900px at 50% -10%, #1a1f24 0%, var(--bg0) 45%, #000 100%);
+      overflow-x:hidden;
+    }
 
-/* splash */
-.splash{
-  position:fixed;inset:0;
-  background:#000;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:99;
-}
-.splash img{
-  width:220px;
-  filter:drop-shadow(0 0 25px rgba(229,57,53,.6));
-}
+    /* subtle carbon overlay (NOT too much) */
+    .carbon{
+      position:fixed; inset:0;
+      pointer-events:none;
+      opacity:.10; /* <-- control “carbon amount” */
+      background:
+        repeating-linear-gradient(135deg,
+          rgba(255,255,255,.10) 0px,
+          rgba(255,255,255,.10) 10px,
+          rgba(0,0,0,.20) 10px,
+          rgba(0,0,0,.20) 20px
+        );
+      mix-blend-mode: overlay;
+      filter: blur(.2px);
+    }
 
-/* layout */
-.wrap{
-  padding:20px;
-  max-width:420px;
-  margin:auto;
-}
+    /* soft vignette */
+    .vignette{
+      position:fixed; inset:0;
+      pointer-events:none;
+      background: radial-gradient(70% 55% at 50% 40%, rgba(0,0,0,0) 0%, rgba(0,0,0,.55) 70%, rgba(0,0,0,.85) 100%);
+    }
 
-.logo{
-  display:block;
-  margin:20px auto 10px;
-  width:200px;
-}
+    /* splash */
+    .splash{
+      position:fixed; inset:0;
+      display:flex; align-items:center; justify-content:center;
+      background: radial-gradient(900px 700px at 50% 40%, #14191e 0%, #050607 60%, #000 100%);
+      z-index:9999;
+      transition: opacity .35s ease, transform .35s ease;
+    }
+    .splash.hide{ opacity:0; transform: scale(1.02); pointer-events:none; }
+    .splash img{
+      width:240px; max-width:70vw;
+      border-radius:20px;
+      box-shadow: 0 30px 70px rgba(0,0,0,.65);
+    }
 
-/* cards */
-.card{
-  background:var(--card);
-  border-radius:18px;
-  padding:16px;
-  box-shadow:0 10px 30px rgba(0,0,0,.6);
-  margin-bottom:16px;
-}
+    .wrap{
+      position:relative;
+      padding: 22px 18px 28px;
+      padding-top: calc(18px + env(safe-area-inset-top));
+      padding-bottom: calc(18px + env(safe-area-inset-bottom));
+      max-width: 520px;
+      margin: 0 auto;
+    }
 
-.label{
-  text-align:center;
-  opacity:.8;
-}
+    .logoBox{
+      display:flex;
+      justify-content:center;
+      margin-top: 14px;
+      margin-bottom: 12px;
+    }
+    .logoBox img{
+      width: 245px;
+      max-width: 76%;
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
 
-.bigMiles{
-  font-size:56px;
-  font-weight:800;
-  text-align:center;
-}
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
 
-.unit{text-align:center;opacity:.7}
+    .mainCard{
+      padding: 16px 16px 14px;
+      margin: 10px 0 14px;
+      text-align:center;
+    }
 
-.glow{
-  height:2px;
-  margin:12px 0;
-  background:linear-gradient(90deg,transparent,var(--red),transparent);
-  animation:pulse 2s infinite;
-}
+    .label{
+      font-size: 15px;
+      letter-spacing: .2px;
+      color: var(--muted);
+      margin-top: 2px;
+      margin-bottom: 8px;
+    }
 
-@keyframes pulse{
-  0%{opacity:.3}
-  50%{opacity:1}
-  100%{opacity:.3}
-}
+    .milesRow{
+      display:flex;
+      align-items:baseline;
+      justify-content:center;
+      gap: 10px;
+      margin-top: 6px;
+      margin-bottom: 8px;
+    }
+    .bigMiles{
+      font-size: 64px;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -1px;
+      text-shadow: 0 10px 25px rgba(0,0,0,.65);
+    }
+    .unit{
+      font-size: 18px;
+      color: var(--muted);
+      margin-bottom: 9px;
+    }
 
-.sub{
-  text-align:center;
-  opacity:.8;
-}
+    /* red “glow line” */
+    .glowLine{
+      height: 4px;
+      margin: 10px 6px 10px;
+      border-radius: 999px;
+      background: linear-gradient(90deg,
+        rgba(255,42,42,0) 0%,
+        rgba(255,42,42,.55) 20%,
+        rgba(255,42,42,1) 50%,
+        rgba(255,42,42,.55) 80%,
+        rgba(255,42,42,0) 100%
+      );
+      box-shadow: 0 0 18px rgba(255,42,42,.35);
+      opacity: .85;
+    }
 
-/* grid */
-.grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:12px;
-}
+    .sub{
+      color: var(--muted);
+      font-size: 15px;
+    }
 
-.tile{
-  background:var(--glass);
-  border-radius:16px;
-  padding:12px;
-  text-align:center;
-}
+    .grid3{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
 
-.icon{
-  font-size:22px;
-  color:var(--red);
-  margin-bottom:6px;
-}
+    .tile{
+      padding: 14px 12px 12px;
+      text-align:center;
+    }
 
-.tVal{font-size:20px;font-weight:700}
+    .iconTop{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin-bottom: 8px;
+    }
+    .iconTop svg{
+      width: 26px;
+      height: 26px;
+      stroke: var(--red);
+      fill: none;
+      filter: drop-shadow(0 0 10px rgba(255,42,42,.25));
+    }
 
-/* buttons */
-.btn{
-  width:100%;
-  border:none;
-  border-radius:999px;
-  padding:16px;
-  font-size:18px;
-  font-weight:700;
-  margin:12px 0;
-}
+    .tLabel{
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      line-height: 1.1;
+    }
+    .tVal{
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -.2px;
+      margin-bottom: 2px;
+    }
+    .tUnit{
+      font-size: 13px;
+      color: var(--muted2);
+      margin-top: 2px;
+    }
 
-.btn-main{
-  background:linear-gradient(180deg,#ff5f5f,#d32f2f);
-  color:#fff;
-  box-shadow:0 10px 30px rgba(229,57,53,.6);
-}
+    .bigBtn{
+      width:100%;
+      margin: 14px 0 12px;
+      padding: 16px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: linear-gradient(180deg, rgba(255,42,42,1), rgba(196,0,18,1));
+      color: #fff;
+      font-weight: 900;
+      font-size: 20px;
+      letter-spacing: .7px;
+      box-shadow: 0 18px 50px rgba(255,42,42,.18), 0 20px 60px rgba(0,0,0,.55);
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      text-transform: uppercase;
+    }
+    .bigBtn:active{ transform: translateY(1px); }
 
-.btn-row{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:10px;
-}
+    .miniRow{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 10px;
+    }
 
-.btn-mini{
-  background:var(--glass);
-  color:#fff;
-  padding:12px;
-  font-size:14px;
-}
+    .miniBtn{
+      padding: 12px 10px;
+      border-radius: 16px;
+      border: 1px solid var(--stroke);
+      background: linear-gradient(180deg, rgba(255,255,255,.065), rgba(255,255,255,.035));
+      color: var(--text);
+      box-shadow: 0 12px 28px rgba(0,0,0,.45);
+      cursor:pointer;
 
-.footer{
-  text-align:center;
-  opacity:.6;
-  font-size:12px;
-}
-</style>
-</head>
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 8px;
+      font-weight: 800;
+    }
+    .miniBtn:active{ transform: translateY(1px); }
 
-<body>
-<div class="bg"></div>
-
-<!-- splash -->
-<div class="splash" id="splash">
-  <img src="icon.png" alt="N54">
-</div>
-
-<div class="wrap">
-
-<img class="logo" src="icon.png">
-
-<div class="card">
-  <div class="label">Current Engine Miles</div>
-  <div class="bigMiles" id="engineMiles">0</div>
-  <div class="unit">miles</div>
-  <div class="glow"></div>
-  <div class="sub">Trip Miles: <span id="tripMiles">0.0</span></div>
-</div>
-
-<div class="grid">
-  <div class="tile">
-    <div class="icon">⏱</div>
-    <div class="tVal" id="runtime">00:00:00</div>
-    <div class="unit">runtime</div>
-  </div>
-  <div class="tile">
-    <div class="icon">📍</div>
-    <div class="tVal"><span id="totalMiles">0.0</span></div>
-    <div class="unit">tracked</div>
-  </div>
-  <div class="tile">
-    <div class="icon">🏁</div>
-    <div class="tVal"><span id="sessionMiles">0.0</span></div>
-    <div class="unit">session</div>
-  </div>
-</div>
-
-<button class="btn btn-main" id="startBtn">▶ START TRACKING</button>
-
-<div class="btn-row">
-  <button class="btn btn-mini" onclick="setMiles()">🔧 Adjust</button>
-  <button class="btn btn-mini" onclick="addSubtract()">➕➖ Add/Sub</button>
-  <button class="btn btn-mini" onclick="clearAll()">🗑 Clear</button>
-</div>
-
-<div class="footer">Runs on your device · localStorage · no account</div>
-</div>
-
-<script>
-let state = JSON.parse(localStorage.getItem("n54_state")) || {
-  engine:0,total:0,trip:0,runtime:0,running:false,last:null
-};
-
-const em=document.getElementById("engineMiles");
-const tm=document.getElementById("tripMiles");
-const tot=document.getElementById("totalMiles");
-const ses=document.getElementById("sessionMiles");
-const run=document.getElementById("runtime");
-
-function save(){localStorage.setItem("n54_state",JSON.stringify(state))}
-function vib(){navigator.vibrate?.(20)}
-
-function update(){
-  em.textContent=state.engine.toFixed(1);
-  tm.textContent=state.trip.toFixed(1);
-  tot.textContent=state.total.toFixed(1);
-  ses.textContent=state.trip.toFixed(1);
-  run.textContent=new Date(state.runtime*1000).toISOString().substr(11,8);
-}
-update();
-
-document.getElementById("startBtn").onclick=()=>{
-  vib();
-  state.running=!state.running;
-  state.last=Date.now();
-  document.getElementById("startBtn").textContent=
-    state.running?"⏸ PAUSE":"▶ START TRACKING";
-  save();
-};
-
-setInterval(()=>{
-  if(!state.running) return;
-  const now=Date.now();
-  const d=(now-state.last)/1000;
-  state.last=now;
-  state.runtime+=d;
-  const miles=d*0.008; // ~30mph avg
-  state.engine+=miles;
-  state.total+=miles;
-  state.trip+=miles;
-  update(); save();
-},1000);
-
-function setMiles(){
-  vib();
-  const v=prompt("Set engine miles:");
-  if(v!==null){state.engine=parseFloat(v)||0;update();save();}
-}
-function addSubtract(){
-  vib();
-  const v=prompt("Add / subtract miles:");
-  if(v!==null){state.engine+=parseFloat(v)||0;update();save();}
-}
-function clearAll(){
-  vib();
-  if(confirm("Clear ALL data?")){
-    localStorage.removeItem("n54_state");
-    location.reload();
-  }
-}
-
-setTimeout(()=>document.getElementById("splash").style.display="none",1200);
-</script>
-</body>
-</html>
+    .miniBtn svg{
+      width: 20px;
+      height: 20px;
+      stroke: var(--red);
+      fill: none;
