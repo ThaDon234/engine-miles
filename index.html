@@ -1,272 +1,445 @@
 <!doctype html>
 <html lang="en">
-  <head>
+<head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <title>Engine Miles Tracker (Private)</title>
+  <title>N54 Mileage Tracker</title>
 
-  <link rel="apple-touch-icon" href="icon.png">
-  <link rel="icon" type="image/png" href="icon.png">
+  <!-- iOS / PWA-ish -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
+  <!-- Icons (make sure icon.png exists in repo root) -->
+  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="icon" type="image/png" href="icon.png">
+
   <style>
-    body { font-family: system-ui, -apple-system, BlinkMacSystemFont; }
-    /* keep ALL your existing CSS here */
-    body { font-family: system-ui, -apple-system, Arial, sans-serif; margin: 18px; line-height: 1.25; }
-    .card { border: 1px solid #ddd; border-radius: 12px; padding: 14px; margin: 12px 0; }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    input, button { font-size: 16px; padding: 10px; border-radius: 10px; border: 1px solid #ccc; }
-    button { cursor: pointer; border: 0; }
-    button.primary { background: #111; color: #fff; }
-    button.warn { background: #b00020; color: #fff; }
-    button.gray { background: #eee; color: #111; }
-    .big { font-size: 28px; font-weight: 800; }
-    .muted { color: #666; }
-    .ok { color: #0a7; font-weight: 700; }
-    .bad { color: #b00020; font-weight: 700; }
-    code { background: #f6f6f6; padding: 2px 6px; border-radius: 8px; }
+    :root{
+      --bg:#070809;
+      --card:#0f1113;
+      --card2:#0c0d0f;
+      --text:#f2f2f2;
+      --muted:#a9adb3;
+      --border:rgba(255,255,255,.08);
+      --red:#e44b4b;
+      --red2:#c93f3f;
+      --shadow: 0 18px 40px rgba(0,0,0,.55);
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      background: radial-gradient(1200px 600px at 50% -200px, rgba(255,255,255,.08), transparent 55%),
+                  linear-gradient(180deg, #050607, #090a0b);
+      color:var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Arial, sans-serif;
+      -webkit-font-smoothing:antialiased;
+      padding: 18px 16px 22px;
+    }
+
+    .wrap{
+      max-width: 520px;
+      margin: 0 auto;
+      min-height: calc(100vh - 40px);
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+
+    /* Splash */
+    .splash{
+      position:fixed;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: radial-gradient(900px 500px at 50% 25%, rgba(255,255,255,.10), transparent 55%),
+                  linear-gradient(180deg, #050607, #090a0b);
+      z-index:9999;
+      transition: opacity .35s ease, transform .35s ease;
+    }
+    .splash.hide{
+      opacity:0;
+      transform: scale(1.02);
+      pointer-events:none;
+    }
+    .splash-card{
+      width:min(360px, 92vw);
+      border:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      border-radius: 22px;
+      padding: 22px 18px;
+      box-shadow: var(--shadow);
+      text-align:center;
+    }
+    .splash-logo{
+      width: 86px;
+      height: 86px;
+      border-radius: 22px;
+      object-fit: cover;
+      border:1px solid var(--border);
+      box-shadow: 0 12px 30px rgba(0,0,0,.55);
+      margin-bottom: 14px;
+    }
+    .splash-title{
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing:.2px;
+      margin:0 0 6px;
+    }
+    .splash-sub{
+      margin:0;
+      color:var(--muted);
+      font-size: 13px;
+    }
+
+    /* Main card */
+    .panel{
+      border:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border-radius: 24px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .tile{
+      border:1px solid var(--border);
+      background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.15));
+      border-radius: 18px;
+      padding: 14px 14px 12px;
+      min-height: 92px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+    }
+
+    .label{
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing:.2px;
+    }
+
+    .value{
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: .2px;
+      line-height: 1;
+      margin-top: 2px;
+    }
+
+    .hint{
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    /* Make the “Trip Miles” span across */
+    .span2{ grid-column: 1 / -1; }
+
+    /* Big button */
+    .cta-wrap{
+      margin-top:auto;
+      padding-top: 8px;
+    }
+
+    .cta{
+      width:100%;
+      height: 66px;
+      border-radius: 999px;
+      border: 0;
+      cursor: pointer;
+      background: linear-gradient(180deg, var(--red), var(--red2));
+      color: #fff;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: .6px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+      box-shadow: 0 18px 34px rgba(228,75,75,.35);
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .cta:active{ transform: translateY(1px); }
+
+    .play{
+      width:0;height:0;
+      border-left: 12px solid #fff;
+      border-top: 8px solid transparent;
+      border-bottom: 8px solid transparent;
+      margin-left: 4px;
+    }
+
+    .stop{
+      width: 14px;
+      height: 14px;
+      background:#fff;
+      border-radius: 3px;
+    }
+
+    /* Small top note (optional but subtle) */
+    .topnote{
+      color: var(--muted);
+      font-size: 12px;
+      text-align:center;
+      margin-top: 2px;
+    }
+
+    /* Tap-to-set helper */
+    .tapset{
+      opacity:.95;
+    }
   </style>
 </head>
+
 <body>
-  <h2>Engine Miles Tracker (Private)</h2>
-  <div class="muted">Runs on your device. Saves to <code>localStorage</code> (no account, no sharing).</div>
-
-  <div class="card">
-    <div class="muted">Current engine miles</div>
-    <div class="big" id="engineMiles">0.0</div>
-    <div class="muted">Trip miles (this session): <span id="tripMiles">0.00</span></div>
-    <div class="muted">GPS status: <span id="gpsStatus" class="bad">Not started</span></div>
-  </div>
-
-  <div class="card">
-    <h3>Set / adjust miles</h3>
-    <div class="row">
-      <input id="setMiles" type="number" step="0.1" placeholder="Set engine miles (exact)" />
-      <button class="primary" id="btnSet">Set</button>
-    </div>
-    <div class="row" style="margin-top:10px;">
-      <input id="addMiles" type="number" step="0.01" placeholder="Add/Subtract miles (ex: 12.3 or -0.5)" />
-      <button class="gray" id="btnAdd">Apply</button>
+  <!-- Splash -->
+  <div id="splash" class="splash">
+    <div class="splash-card">
+      <img class="splash-logo" src="icon.png" alt="App icon">
+      <p class="splash-title">N54 Mileage Tracker</p>
+      <p class="splash-sub">Tracking engine miles (on-device)</p>
     </div>
   </div>
 
-  <div class="card">
-    <h3>Auto-add miles while driving (GPS)</h3>
-    <div class="muted">
-      Use on your phone. You must allow Location. Best accuracy when you’re outside with good signal.
-    </div>
-    <div class="row" style="margin-top:10px;">
-      <button class="primary" id="btnStart">Start Tracking</button>
-      <button class="gray" id="btnStop">Stop</button>
-      <button class="gray" id="btnResetTrip">Reset Trip</button>
-    </div>
-    <div class="muted" style="margin-top:10px;">
-      We ignore bad GPS points and only count distance when accuracy is decent.
-    </div>
-  </div>
+  <div class="wrap">
+    <div class="panel">
+      <div class="grid">
+        <!-- Duration -->
+        <div class="tile">
+          <div class="label">Duration</div>
+          <div class="value" id="dur">00:00:00</div>
+          <div class="hint" id="gps">GPS: Stopped</div>
+        </div>
 
-  <div class="card">
-    <h3>Backup / restore</h3>
-    <div class="row">
-      <button class="gray" id="btnExport">Export JSON</button>
-      <input id="importBox" type="text" placeholder="Paste JSON here to import" style="flex:1; min-width: 220px;" />
-      <button class="primary" id="btnImport">Import</button>
+        <!-- Engine miles (tap to set) -->
+        <div class="tile tapset" id="tileEngine">
+          <div class="label">Engine Miles</div>
+          <div class="value" id="engineMiles">0.0</div>
+          <div class="hint">Tap to set</div>
+        </div>
+
+        <!-- Trip miles (this session) -->
+        <div class="tile span2">
+          <div class="label">Trip Miles (this session)</div>
+          <div class="value" id="tripMiles">0.00</div>
+          <div class="hint">Auto-add while tracking</div>
+        </div>
+      </div>
+
+      <div class="topnote">Saves on your device (localStorage). No account.</div>
     </div>
-    <div class="row" style="margin-top:10px;">
-      <button class="warn" id="btnClear">Clear All Data</button>
+
+    <div class="cta-wrap">
+      <button id="btn" class="cta" type="button">
+        <span id="btnIcon" class="play"></span>
+        <span id="btnText">START</span>
+      </button>
     </div>
   </div>
 
 <script>
 (() => {
-  // -------- storage --------
-  const KEY = "engine_miles_tracker_v1";
+  // ---------- storage ----------
+  const KEY = "engine_miles_tracker_v2";
   const state = load() || {
     engineMiles: 0,
+    // trip session
     tripMiles: 0,
+    running: false,
+    startTime: null,
+    // gps
     lastLat: null,
     lastLon: null,
-    lastTime: null,
     lastAcc: null
   };
 
-  // -------- UI elements --------
+  function load(){
+    try { return JSON.parse(localStorage.getItem(KEY) || ""); }
+    catch { return null; }
+  }
+  function save(){
+    localStorage.setItem(KEY, JSON.stringify(state));
+  }
+
+  // ---------- UI ----------
   const elEngine = document.getElementById("engineMiles");
   const elTrip = document.getElementById("tripMiles");
-  const elStatus = document.getElementById("gpsStatus");
-  const setMiles = document.getElementById("setMiles");
-  const addMiles = document.getElementById("addMiles");
+  const elDur = document.getElementById("dur");
+  const elGps = document.getElementById("gps");
+  const btn = document.getElementById("btn");
+  const btnText = document.getElementById("btnText");
+  const btnIcon = document.getElementById("btnIcon");
+  const tileEngine = document.getElementById("tileEngine");
 
-  const btnSet = document.getElementById("btnSet");
-  const btnAdd = document.getElementById("btnAdd");
-  const btnStart = document.getElementById("btnStart");
-  const btnStop = document.getElementById("btnStop");
-  const btnResetTrip = document.getElementById("btnResetTrip");
+  // Splash (quick)
+  const splash = document.getElementById("splash");
+  setTimeout(() => splash.classList.add("hide"), 550);
 
-  const btnExport = document.getElementById("btnExport");
-  const btnImport = document.getElementById("btnImport");
-  const importBox = document.getElementById("importBox");
-  const btnClear = document.getElementById("btnClear");
+  // Tap engine miles to set
+  tileEngine.addEventListener("click", () => {
+    const current = Number(state.engineMiles || 0);
+    const val = prompt("Set engine miles (exact):", String(current));
+    if (val === null) return;
+    const n = Number(val);
+    if (!Number.isFinite(n) || n < 0) return alert("Enter a valid number.");
+    state.engineMiles = n;
+    save();
+    render();
+  });
 
+  // ---------- tracking ----------
   let watchId = null;
+  let uiTimer = null;
 
-  // -------- helpers --------
-  function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
-  function load() {
-    try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; }
+  function fmtMiles(n, decimals){
+    const d = typeof decimals === "number" ? decimals : 1;
+    return (Math.round(n * (10**d)) / (10**d)).toFixed(d);
   }
-  function fmt(n, d=1) { return Number(n).toFixed(d); }
 
-  // Haversine distance in miles
-  function milesBetween(lat1, lon1, lat2, lon2) {
-    const Rm = 3958.7613; // Earth radius in miles
-    const toRad = x => x * Math.PI / 180;
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
+  function fmtTime(ms){
+    const s = Math.max(0, Math.floor(ms/1000));
+    const hh = String(Math.floor(s/3600)).padStart(2,"0");
+    const mm = String(Math.floor((s%3600)/60)).padStart(2,"0");
+    const ss = String(s%60).padStart(2,"0");
+    return `${hh}:${mm}:${ss}`;
+  }
+
+  function haversineMiles(lat1, lon1, lat2, lon2){
+    const R = 3958.7613; // miles
+    const toRad = (x) => x * Math.PI/180;
+    const dLat = toRad(lat2-lat1);
+    const dLon = toRad(lon2-lon1);
     const a =
-      Math.sin(dLat/2) ** 2 +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * (Math.sin(dLon/2) ** 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return Rm * c;
+      Math.sin(dLat/2)**2 +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
   }
 
-  function setStatus(text, ok=false) {
-    elStatus.textContent = text;
-    elStatus.className = ok ? "ok" : "bad";
-  }
+  function start(){
+    if (!navigator.geolocation) return alert("Geolocation not supported.");
 
-  function render() {
-    elEngine.textContent = fmt(state.engineMiles, 1);
-    elTrip.textContent = fmt(state.tripMiles, 2);
-  }
-
-  // -------- buttons --------
-  btnSet.onclick = () => {
-    const v = Number(setMiles.value);
-    if (!Number.isFinite(v) || v < 0) return alert("Enter a valid miles number.");
-    state.engineMiles = v;
-    save(); render();
-  };
-
-  btnAdd.onclick = () => {
-    const v = Number(addMiles.value);
-    if (!Number.isFinite(v)) return alert("Enter a valid number to add/subtract.");
-    state.engineMiles = Math.max(0, state.engineMiles + v);
-    save(); render();
-  };
-
-  btnResetTrip.onclick = () => {
+    // New session each start (no reset button needed)
     state.tripMiles = 0;
-    state.lastLat = state.lastLon = state.lastTime = state.lastAcc = null;
-    save(); render();
-  };
+    state.startTime = Date.now();
+    state.running = true;
+    state.lastLat = null;
+    state.lastLon = null;
+    state.lastAcc = null;
+    save();
 
-  btnExport.onclick = () => {
-    const data = JSON.stringify({
-      engineMiles: state.engineMiles,
-      tripMiles: state.tripMiles
+    elGps.textContent = "GPS: Starting…";
+    setBtn(true);
+
+    watchId = navigator.geolocation.watchPosition(onPos, onErr, {
+      enableHighAccuracy: true,
+      maximumAge: 1000,
+      timeout: 15000
     });
-    navigator.clipboard?.writeText(data).catch(()=>{});
-    alert("Copied to clipboard:\n\n" + data);
-  };
 
-  btnImport.onclick = () => {
-    try {
-      const obj = JSON.parse(importBox.value.trim());
-      if (!obj || !Number.isFinite(obj.engineMiles)) throw new Error();
-      state.engineMiles = Math.max(0, Number(obj.engineMiles));
-      state.tripMiles = Number.isFinite(obj.tripMiles) ? Math.max(0, Number(obj.tripMiles)) : 0;
-      state.lastLat = state.lastLon = state.lastTime = state.lastAcc = null;
-      save(); render();
-      alert("Imported.");
-    } catch {
-      alert("Invalid JSON.");
+    if (!uiTimer){
+      uiTimer = setInterval(render, 250);
     }
-  };
+    render();
+  }
 
-  btnClear.onclick = () => {
-    if (!confirm("Clear all saved miles?")) return;
-    localStorage.removeItem(KEY);
-    location.reload();
-  };
+  function stop(){
+    state.running = false;
+    save();
 
-  // -------- GPS tracking --------
-  function startTracking() {
-    if (!navigator.geolocation) {
-      setStatus("Geolocation not supported", false);
+    if (watchId !== null){
+      navigator.geolocation.clearWatch(watchId);
+      watchId = null;
+    }
+    if (uiTimer){
+      clearInterval(uiTimer);
+      uiTimer = null;
+    }
+
+    elGps.textContent = "GPS: Stopped";
+    setBtn(false);
+    render();
+  }
+
+  function setBtn(running){
+    if (running){
+      btnText.textContent = "STOP";
+      btnIcon.className = "stop";
+    } else {
+      btnText.textContent = "START";
+      btnIcon.className = "play";
+    }
+  }
+
+  function onPos(pos){
+    const { latitude, longitude, accuracy } = pos.coords;
+
+    // Ignore super-bad points
+    if (!Number.isFinite(accuracy) || accuracy > 80){
+      elGps.textContent = "GPS: Weak signal";
       return;
     }
-    if (watchId != null) return;
 
-    // For safety: reset last point when starting a new session
-    state.lastLat = state.lastLon = state.lastTime = state.lastAcc = null;
-    save(); render();
+    elGps.textContent = "GPS: Tracking";
 
-    setStatus("Starting… allow Location", false);
+    if (state.lastLat != null && state.lastLon != null){
+      const add = haversineMiles(state.lastLat, state.lastLon, latitude, longitude);
 
-    watchId = navigator.geolocation.watchPosition(
-      (pos) => {
-        const { latitude, longitude, accuracy } = pos.coords;
-        const t = pos.timestamp;
-
-        // Ignore super-bad accuracy points (tweak if needed)
-        // 25m ~ 82ft is decent; 50-100m can be noisy in city
-        const maxAccMeters = 50;
-
-        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
-
-        if (accuracy && accuracy > maxAccMeters) {
-          setStatus(`GPS ok but accuracy ${Math.round(accuracy)}m (waiting for better)`, false);
-          state.lastLat = latitude; state.lastLon = longitude; state.lastTime = t; state.lastAcc = accuracy;
-          save();
-          return;
-        }
-
-        if (state.lastLat != null && state.lastLon != null) {
-          const d = milesBetween(state.lastLat, state.lastLon, latitude, longitude);
-
-          // Filter out GPS jumps:
-          // - ignore tiny noise < 0.01 miles (~53 ft)
-          // - ignore big jumps > 1.0 miles between pings
-          if (d >= 0.01 && d <= 1.0) {
-            state.tripMiles += d;
-            state.engineMiles += d;
-            save(); render();
-          }
-        }
-
-        state.lastLat = latitude;
-        state.lastLon = longitude;
-        state.lastTime = t;
-        state.lastAcc = accuracy;
-
-        setStatus(`Tracking (accuracy ~${Math.round(accuracy || 0)}m)`, true);
-      },
-      (err) => {
-        setStatus(`GPS error: ${err.message}`, false);
-        watchId = null;
-      },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 1000,
-        timeout: 10000
+      // Ignore tiny jitter
+      if (add > 0.01 && add < 5){
+        state.tripMiles += add;
+        state.engineMiles += add;   // <-- this is the “automatic add”
+        save();
       }
-    );
+    }
+
+    state.lastLat = latitude;
+    state.lastLon = longitude;
+    state.lastAcc = accuracy;
   }
 
-  function stopTracking() {
-    if (watchId != null) navigator.geolocation.clearWatch(watchId);
-    watchId = null;
-    setStatus("Stopped", false);
+  function onErr(err){
+    elGps.textContent = "GPS: Blocked";
+    // If location is denied, stop cleanly
+    if (err && err.code === 1) stop();
   }
 
-  btnStart.onclick = startTracking;
-  btnStop.onclick = stopTracking;
+  function render(){
+    elEngine.textContent = fmtMiles(state.engineMiles || 0, 1);
+    elTrip.textContent = fmtMiles(state.tripMiles || 0, 2);
 
-  // -------- init --------
-  render();
+    if (state.running && state.startTime){
+      elDur.textContent = fmtTime(Date.now() - state.startTime);
+    } else {
+      elDur.textContent = "00:00:00";
+    }
+  }
+
+  // Button toggle
+  btn.addEventListener("click", () => {
+    if (state.running) stop();
+    else start();
+  });
+
+  // Init
+  setBtn(!!state.running);
+  if (state.running){
+    // If the page reloads while "running", we stop safely
+    stop();
+  } else {
+    render();
+  }
 })();
 </script>
 </body>
