@@ -2,445 +2,537 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
   <title>N54 Mileage Tracker</title>
 
-  <!-- iOS / PWA-ish -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-
-  <!-- Icons (make sure icon.png exists in repo root) -->
+  <!-- PWA / iOS icon -->
   <link rel="apple-touch-icon" href="icon.png">
   <link rel="icon" type="image/png" href="icon.png">
 
+  <!-- PWA-ish -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
   <style>
     :root{
-      --bg:#070809;
-      --card:#0f1113;
-      --card2:#0c0d0f;
-      --text:#f2f2f2;
-      --muted:#a9adb3;
-      --border:rgba(255,255,255,.08);
-      --red:#e44b4b;
-      --red2:#c93f3f;
-      --shadow: 0 18px 40px rgba(0,0,0,.55);
+      --bg:#050607;
+      --card: rgba(255,255,255,.06);
+      --card2: rgba(255,255,255,.045);
+      --stroke: rgba(255,255,255,.08);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.62);
+      --red:#e33b3b;
+      --red2:#b41f1f;
+      --shadow: 0 18px 50px rgba(0,0,0,.55);
+      --radius: 18px;
     }
 
-    *{box-sizing:border-box}
-    html,body{height:100%}
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
     body{
       margin:0;
-      background: radial-gradient(1200px 600px at 50% -200px, rgba(255,255,255,.08), transparent 55%),
-                  linear-gradient(180deg, #050607, #090a0b);
+      font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
       color:var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Arial, sans-serif;
-      -webkit-font-smoothing:antialiased;
-      padding: 18px 16px 22px;
+      background: var(--bg);
+      overflow-x:hidden;
+    }
+
+    /* Carbon-ish background */
+    .bg{
+      position:fixed;
+      inset:0;
+      background:
+        radial-gradient(1200px 900px at 50% -100px, rgba(255,255,255,.10), transparent 60%),
+        radial-gradient(900px 600px at 10% 20%, rgba(255,0,0,.06), transparent 55%),
+        radial-gradient(900px 700px at 90% 40%, rgba(255,255,255,.07), transparent 55%),
+        linear-gradient(180deg, rgba(255,255,255,.06), transparent 35%),
+        repeating-linear-gradient(135deg,
+          rgba(255,255,255,.03) 0px,
+          rgba(255,255,255,.03) 7px,
+          rgba(0,0,0,.02) 7px,
+          rgba(0,0,0,.02) 14px);
+      filter: contrast(1.05) saturate(1.05);
+    }
+    .bg:after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background: radial-gradient(700px 700px at 50% 100%, rgba(0,0,0,.75), transparent 60%);
+      pointer-events:none;
     }
 
     .wrap{
-      max-width: 520px;
-      margin: 0 auto;
-      min-height: calc(100vh - 40px);
+      position:relative;
+      min-height:100%;
+      padding: 22px 16px calc(26px + env(safe-area-inset-bottom));
       display:flex;
-      flex-direction:column;
-      gap:14px;
+      justify-content:center;
     }
 
-    /* Splash */
+    .panel{
+      width: min(420px, 100%);
+      padding-top: 10px;
+    }
+
+    /* Top logo badge */
+    .logo{
+      width: 230px;
+      max-width: 70%;
+      margin: 8px auto 14px;
+      display:block;
+      filter: drop-shadow(0 10px 25px rgba(0,0,0,.6));
+      border-radius: 14px;
+    }
+
+    /* Main miles card */
+    .mainCard{
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border: 1px solid var(--stroke);
+      border-radius: 22px;
+      padding: 18px 18px 16px;
+      box-shadow: var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+    .mainCard:before{
+      content:"";
+      position:absolute;
+      left:-40%;
+      right:-40%;
+      top: 58%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(227,59,59,.85), transparent);
+      filter: blur(.2px);
+    }
+
+    .label{
+      text-align:center;
+      color: var(--muted);
+      font-size: 14px;
+      letter-spacing:.2px;
+      margin-bottom: 6px;
+    }
+    .milesRow{
+      display:flex;
+      align-items: baseline;
+      justify-content:center;
+      gap: 10px;
+    }
+    .bigMiles{
+      font-size: 56px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: .5px;
+      text-shadow: 0 10px 30px rgba(0,0,0,.55);
+      font-variant-numeric: tabular-nums;
+      cursor:pointer;
+    }
+    .unit{
+      color: var(--muted);
+      font-weight: 700;
+      margin-top: 22px;
+      font-size: 16px;
+    }
+    .sub{
+      text-align:center;
+      margin-top: 8px;
+      color: rgba(255,255,255,.72);
+      font-size: 14px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* 3 stat tiles */
+    .grid3{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 12px 0 14px;
+    }
+    .tile{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid var(--stroke);
+      border-radius: 18px;
+      padding: 12px 10px 10px;
+      box-shadow: 0 14px 34px rgba(0,0,0,.40);
+      text-align:center;
+      min-height: 84px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+    }
+    .tile .tLabel{
+      color: rgba(255,255,255,.72);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+    .tile .tVal{
+      font-weight: 800;
+      font-size: 20px;
+      font-variant-numeric: tabular-nums;
+    }
+    .tile .tUnit{
+      font-size: 12px;
+      color: rgba(255,255,255,.55);
+      margin-top: 2px;
+    }
+
+    /* Big red start button */
+    .startWrap{
+      margin: 14px 0 14px;
+    }
+    .startBtn{
+      width: 100%;
+      padding: 18px 18px;
+      border: none;
+      border-radius: 999px;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: .6px;
+      color: white;
+      background: linear-gradient(180deg, var(--red), var(--red2));
+      box-shadow: 0 20px 55px rgba(227,59,59,.25), 0 12px 30px rgba(0,0,0,.55);
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+      text-transform: uppercase;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .startBtn:active{ transform: translateY(1px); }
+
+    /* Action buttons row */
+    .gridActions{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .actionBtn{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border: 1px solid var(--stroke);
+      border-radius: 18px;
+      padding: 12px 10px;
+      box-shadow: 0 14px 34px rgba(0,0,0,.35);
+      color: rgba(255,255,255,.88);
+      font-weight: 800;
+      font-size: 12px;
+      text-align:center;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .actionBtn:active{ transform: translateY(1px); }
+    .hint{
+      text-align:center;
+      margin-top: 10px;
+      color: rgba(255,255,255,.45);
+      font-size: 12px;
+    }
+
+    /* Splash overlay (simple, real iOS startup images are optional later) */
     .splash{
       position:fixed;
       inset:0;
       display:flex;
       align-items:center;
       justify-content:center;
-      background: radial-gradient(900px 500px at 50% 25%, rgba(255,255,255,.10), transparent 55%),
-                  linear-gradient(180deg, #050607, #090a0b);
+      background: #050607;
       z-index:9999;
-      transition: opacity .35s ease, transform .35s ease;
+      transition: opacity .35s ease;
     }
-    .splash.hide{
-      opacity:0;
-      transform: scale(1.02);
-      pointer-events:none;
-    }
-    .splash-card{
-      width:min(360px, 92vw);
-      border:1px solid var(--border);
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
-      border-radius: 22px;
-      padding: 22px 18px;
-      box-shadow: var(--shadow);
-      text-align:center;
-    }
-    .splash-logo{
-      width: 86px;
-      height: 86px;
-      border-radius: 22px;
-      object-fit: cover;
-      border:1px solid var(--border);
-      box-shadow: 0 12px 30px rgba(0,0,0,.55);
-      margin-bottom: 14px;
-    }
-    .splash-title{
-      font-size: 18px;
-      font-weight: 800;
-      letter-spacing:.2px;
-      margin:0 0 6px;
-    }
-    .splash-sub{
-      margin:0;
-      color:var(--muted);
-      font-size: 13px;
-    }
-
-    /* Main card */
-    .panel{
-      border:1px solid var(--border);
-      background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-      border-radius: 24px;
-      padding: 18px;
-      box-shadow: var(--shadow);
-    }
-
-    .grid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .tile{
-      border:1px solid var(--border);
-      background: linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.15));
-      border-radius: 18px;
-      padding: 14px 14px 12px;
-      min-height: 92px;
-      display:flex;
-      flex-direction:column;
-      justify-content:space-between;
-    }
-
-    .label{
-      color: var(--muted);
-      font-size: 12px;
-      letter-spacing:.2px;
-    }
-
-    .value{
-      font-size: 32px;
-      font-weight: 900;
-      letter-spacing: .2px;
-      line-height: 1;
-      margin-top: 2px;
-    }
-
-    .hint{
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 4px;
-    }
-
-    /* Make the “Trip Miles” span across */
-    .span2{ grid-column: 1 / -1; }
-
-    /* Big button */
-    .cta-wrap{
-      margin-top:auto;
-      padding-top: 8px;
-    }
-
-    .cta{
-      width:100%;
-      height: 66px;
-      border-radius: 999px;
-      border: 0;
-      cursor: pointer;
-      background: linear-gradient(180deg, var(--red), var(--red2));
-      color: #fff;
-      font-size: 18px;
-      font-weight: 900;
-      letter-spacing: .6px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap: 10px;
-      box-shadow: 0 18px 34px rgba(228,75,75,.35);
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .cta:active{ transform: translateY(1px); }
-
-    .play{
-      width:0;height:0;
-      border-left: 12px solid #fff;
-      border-top: 8px solid transparent;
-      border-bottom: 8px solid transparent;
-      margin-left: 4px;
-    }
-
-    .stop{
-      width: 14px;
-      height: 14px;
-      background:#fff;
-      border-radius: 3px;
-    }
-
-    /* Small top note (optional but subtle) */
-    .topnote{
-      color: var(--muted);
-      font-size: 12px;
-      text-align:center;
-      margin-top: 2px;
-    }
-
-    /* Tap-to-set helper */
-    .tapset{
-      opacity:.95;
+    .splash.hide{ opacity:0; pointer-events:none; }
+    .splash img{
+      width: 260px;
+      max-width: 70%;
+      filter: drop-shadow(0 18px 50px rgba(0,0,0,.7));
+      border-radius: 16px;
     }
   </style>
 </head>
 
 <body>
-  <!-- Splash -->
-  <div id="splash" class="splash">
-    <div class="splash-card">
-      <img class="splash-logo" src="icon.png" alt="App icon">
-      <p class="splash-title">N54 Mileage Tracker</p>
-      <p class="splash-sub">Tracking engine miles (on-device)</p>
-    </div>
+  <div class="bg"></div>
+
+  <!-- splash screen -->
+  <div class="splash" id="splash">
+    <img src="icon.png" alt="N54">
   </div>
 
   <div class="wrap">
     <div class="panel">
-      <div class="grid">
-        <!-- Duration -->
+      <img class="logo" src="icon.png" alt="N54 Logo">
+
+      <div class="mainCard">
+        <div class="label">Current Engine Miles</div>
+
+        <div class="milesRow">
+          <div class="bigMiles" id="engineMiles" title="Tap to set">0</div>
+          <div class="unit">miles</div>
+        </div>
+
+        <div class="sub">Trip Miles: <span id="sessionMiles">0.0</span></div>
+      </div>
+
+      <div class="grid3">
         <div class="tile">
-          <div class="label">Duration</div>
-          <div class="value" id="dur">00:00:00</div>
-          <div class="hint" id="gps">GPS: Stopped</div>
+          <div class="tLabel">Total Runtime</div>
+          <div class="tVal" id="totalRuntime">00:00:00</div>
+          <div class="tUnit">hh:mm:ss</div>
         </div>
-
-        <!-- Engine miles (tap to set) -->
-        <div class="tile tapset" id="tileEngine">
-          <div class="label">Engine Miles</div>
-          <div class="value" id="engineMiles">0.0</div>
-          <div class="hint">Tap to set</div>
+        <div class="tile">
+          <div class="tLabel">Total Tracked Miles</div>
+          <div class="tVal"><span id="totalTracked">0.0</span></div>
+          <div class="tUnit">miles</div>
         </div>
-
-        <!-- Trip miles (this session) -->
-        <div class="tile span2">
-          <div class="label">Trip Miles (this session)</div>
-          <div class="value" id="tripMiles">0.00</div>
-          <div class="hint">Auto-add while tracking</div>
+        <div class="tile">
+          <div class="tLabel">Session Miles</div>
+          <div class="tVal"><span id="sessionMiles2">0.0</span></div>
+          <div class="tUnit">miles</div>
         </div>
       </div>
 
-      <div class="topnote">Saves on your device (localStorage). No account.</div>
-    </div>
+      <div class="startWrap">
+        <button class="startBtn" id="btnStart">
+          ▶ <span id="btnText">START TRACKING</span>
+        </button>
+      </div>
 
-    <div class="cta-wrap">
-      <button id="btn" class="cta" type="button">
-        <span id="btnIcon" class="play"></span>
-        <span id="btnText">START</span>
-      </button>
+      <div class="gridActions">
+        <div class="actionBtn" id="btnSetExact">Adjust Miles</div>
+        <div class="actionBtn" id="btnAddSub">Add/Subtract</div>
+        <div class="actionBtn" id="btnClear">Clear All Data</div>
+      </div>
+
+      <div class="hint">Runs on your device. Saves to localStorage. No account.</div>
     </div>
   </div>
 
-<script>
-(() => {
-  // ---------- storage ----------
-  const KEY = "engine_miles_tracker_v2";
-  const state = load() || {
-    engineMiles: 0,
-    // trip session
-    tripMiles: 0,
-    running: false,
-    startTime: null,
-    // gps
-    lastLat: null,
-    lastLon: null,
-    lastAcc: null
-  };
+  <script>
+    // -------------------- storage --------------------
+    const KEY = "n54_engine_miles_v2";
 
-  function load(){
-    try { return JSON.parse(localStorage.getItem(KEY) || ""); }
-    catch { return null; }
-  }
-  function save(){
-    localStorage.setItem(KEY, JSON.stringify(state));
-  }
+    function load(){
+      try { return JSON.parse(localStorage.getItem(KEY) || "null"); }
+      catch { return null; }
+    }
+    function save(){
+      localStorage.setItem(KEY, JSON.stringify(state));
+    }
 
-  // ---------- UI ----------
-  const elEngine = document.getElementById("engineMiles");
-  const elTrip = document.getElementById("tripMiles");
-  const elDur = document.getElementById("dur");
-  const elGps = document.getElementById("gps");
-  const btn = document.getElementById("btn");
-  const btnText = document.getElementById("btnText");
-  const btnIcon = document.getElementById("btnIcon");
-  const tileEngine = document.getElementById("tileEngine");
+    // -------------------- state --------------------
+    const state = load() || {
+      engineMiles: 0,
+      totalTrackedMiles: 0,
+      totalRuntimeSec: 0,
 
-  // Splash (quick)
-  const splash = document.getElementById("splash");
-  setTimeout(() => splash.classList.add("hide"), 550);
+      // current session (resets automatically when you start)
+      sessionMiles: 0,
+      sessionStartTs: null,
 
-  // Tap engine miles to set
-  tileEngine.addEventListener("click", () => {
-    const current = Number(state.engineMiles || 0);
-    const val = prompt("Set engine miles (exact):", String(current));
-    if (val === null) return;
-    const n = Number(val);
-    if (!Number.isFinite(n) || n < 0) return alert("Enter a valid number.");
-    state.engineMiles = n;
-    save();
-    render();
-  });
+      // gps
+      tracking: false,
+      lastLat: null,
+      lastLon: null,
+      lastTime: null,
+      lastAcc: null
+    };
 
-  // ---------- tracking ----------
-  let watchId = null;
-  let uiTimer = null;
+    // -------------------- UI elements --------------------
+    const elEngine = document.getElementById("engineMiles");
+    const elSession = document.getElementById("sessionMiles");
+    const elSession2 = document.getElementById("sessionMiles2");
+    const elTotalTracked = document.getElementById("totalTracked");
+    const elTotalRuntime = document.getElementById("totalRuntime");
+    const btnStart = document.getElementById("btnStart");
+    const btnText = document.getElementById("btnText");
 
-  function fmtMiles(n, decimals){
-    const d = typeof decimals === "number" ? decimals : 1;
-    return (Math.round(n * (10**d)) / (10**d)).toFixed(d);
-  }
+    // -------------------- helpers --------------------
+    function fmtMiles(n, decimals=1){
+      const x = Number(n || 0);
+      return x.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    }
+    function fmtInt(n){
+      return Math.round(Number(n||0)).toLocaleString();
+    }
+    function fmtHMS(totalSec){
+      totalSec = Math.max(0, Math.floor(totalSec || 0));
+      const h = String(Math.floor(totalSec/3600)).padStart(2,"0");
+      const m = String(Math.floor((totalSec%3600)/60)).padStart(2,"0");
+      const s = String(totalSec%60).padStart(2,"0");
+      return `${h}:${m}:${s}`;
+    }
+    function haversineMiles(lat1, lon1, lat2, lon2){
+      const R = 6371000; // meters
+      const toRad = (d)=> d * Math.PI/180;
+      const dLat = toRad(lat2-lat1);
+      const dLon = toRad(lon2-lon1);
+      const a =
+        Math.sin(dLat/2)**2 +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      const meters = R * c;
+      return meters / 1609.344;
+    }
 
-  function fmtTime(ms){
-    const s = Math.max(0, Math.floor(ms/1000));
-    const hh = String(Math.floor(s/3600)).padStart(2,"0");
-    const mm = String(Math.floor((s%3600)/60)).padStart(2,"0");
-    const ss = String(s%60).padStart(2,"0");
-    return `${hh}:${mm}:${ss}`;
-  }
+    function render(){
+      elEngine.textContent = fmtInt(state.engineMiles);
+      elSession.textContent = fmtMiles(state.sessionMiles, 1);
+      elSession2.textContent = fmtMiles(state.sessionMiles, 1);
+      elTotalTracked.textContent = fmtMiles(state.totalTrackedMiles, 1);
+      elTotalRuntime.textContent = fmtHMS(state.totalRuntimeSec);
 
-  function haversineMiles(lat1, lon1, lat2, lon2){
-    const R = 3958.7613; // miles
-    const toRad = (x) => x * Math.PI/180;
-    const dLat = toRad(lat2-lat1);
-    const dLon = toRad(lon2-lon1);
-    const a =
-      Math.sin(dLat/2)**2 +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-  }
+      btnText.textContent = state.tracking ? "STOP TRACKING" : "START TRACKING";
+      btnStart.style.background = state.tracking
+        ? "linear-gradient(180deg, #555, #222)"
+        : "linear-gradient(180deg, var(--red), var(--red2))";
+    }
 
-  function start(){
-    if (!navigator.geolocation) return alert("Geolocation not supported.");
-
-    // New session each start (no reset button needed)
-    state.tripMiles = 0;
-    state.startTime = Date.now();
-    state.running = true;
-    state.lastLat = null;
-    state.lastLon = null;
-    state.lastAcc = null;
-    save();
-
-    elGps.textContent = "GPS: Starting…";
-    setBtn(true);
-
-    watchId = navigator.geolocation.watchPosition(onPos, onErr, {
-      enableHighAccuracy: true,
-      maximumAge: 1000,
-      timeout: 15000
+    // -------------------- splash hide --------------------
+    window.addEventListener("load", ()=>{
+      // small delay so it feels like a real splash
+      setTimeout(()=> document.getElementById("splash").classList.add("hide"), 700);
     });
 
-    if (!uiTimer){
-      uiTimer = setInterval(render, 250);
-    }
-    render();
-  }
+    // -------------------- set miles (tap main number) --------------------
+    elEngine.addEventListener("click", ()=>{
+      const v = prompt("Set engine miles (exact):", String(Math.round(state.engineMiles || 0)));
+      if(v === null) return;
+      const n = Number(String(v).replace(/,/g,""));
+      if(!Number.isFinite(n) || n < 0){ alert("Enter a valid number."); return; }
+      state.engineMiles = Math.round(n);
+      save(); render();
+    });
 
-  function stop(){
-    state.running = false;
-    save();
+    // Buttons
+    document.getElementById("btnSetExact").addEventListener("click", ()=>{
+      const v = prompt("Set engine miles (exact):", String(Math.round(state.engineMiles || 0)));
+      if(v === null) return;
+      const n = Number(String(v).replace(/,/g,""));
+      if(!Number.isFinite(n) || n < 0){ alert("Enter a valid number."); return; }
+      state.engineMiles = Math.round(n);
+      save(); render();
+    });
 
-    if (watchId !== null){
-      navigator.geolocation.clearWatch(watchId);
-      watchId = null;
-    }
-    if (uiTimer){
-      clearInterval(uiTimer);
-      uiTimer = null;
-    }
+    document.getElementById("btnAddSub").addEventListener("click", ()=>{
+      const v = prompt("Add/Subtract miles (example: 100 or -25):", "0");
+      if(v === null) return;
+      const n = Number(String(v).replace(/,/g,""));
+      if(!Number.isFinite(n)){ alert("Enter a valid number."); return; }
+      state.engineMiles = Math.max(0, Math.round((state.engineMiles || 0) + n));
+      save(); render();
+    });
 
-    elGps.textContent = "GPS: Stopped";
-    setBtn(false);
-    render();
-  }
+    document.getElementById("btnClear").addEventListener("click", ()=>{
+      const ok = confirm("Clear ALL data? (This cannot be undone)");
+      if(!ok) return;
 
-  function setBtn(running){
-    if (running){
-      btnText.textContent = "STOP";
-      btnIcon.className = "stop";
-    } else {
-      btnText.textContent = "START";
-      btnIcon.className = "play";
-    }
-  }
+      state.engineMiles = 0;
+      state.totalTrackedMiles = 0;
+      state.totalRuntimeSec = 0;
+      state.sessionMiles = 0;
 
-  function onPos(pos){
-    const { latitude, longitude, accuracy } = pos.coords;
+      // stop tracking too
+      stopTracking(true);
 
-    // Ignore super-bad points
-    if (!Number.isFinite(accuracy) || accuracy > 80){
-      elGps.textContent = "GPS: Weak signal";
-      return;
-    }
+      save(); render();
+    });
 
-    elGps.textContent = "GPS: Tracking";
+    // -------------------- tracking --------------------
+    let watchId = null;
+    let runtimeTick = null;
 
-    if (state.lastLat != null && state.lastLon != null){
-      const add = haversineMiles(state.lastLat, state.lastLon, latitude, longitude);
+    function startTracking(){
+      if(state.tracking) return;
 
-      // Ignore tiny jitter
-      if (add > 0.01 && add < 5){
-        state.tripMiles += add;
-        state.engineMiles += add;   // <-- this is the “automatic add”
-        save();
+      // reset the session automatically when you start (no reset button needed)
+      state.sessionMiles = 0;
+      state.sessionStartTs = Date.now();
+      state.lastLat = null;
+      state.lastLon = null;
+      state.lastTime = null;
+      state.lastAcc = null;
+
+      state.tracking = true;
+      save(); render();
+
+      if(!navigator.geolocation){
+        alert("GPS not available on this device.");
+        stopTracking(true);
+        return;
       }
+
+      watchId = navigator.geolocation.watchPosition(
+        (pos)=>{
+          const { latitude, longitude, accuracy } = pos.coords;
+          const t = pos.timestamp || Date.now();
+
+          // ignore super-bad accuracy (prevents jumps)
+          if(Number.isFinite(accuracy) && accuracy > 60) return;
+
+          if(state.lastLat != null && state.lastLon != null){
+            const dist = haversineMiles(state.lastLat, state.lastLon, latitude, longitude);
+
+            // ignore tiny jitter + insane jumps
+            if(dist > 0.01 && dist < 2.0){
+              state.sessionMiles += dist;
+              state.totalTrackedMiles += dist;
+              state.engineMiles = Math.round((state.engineMiles || 0) + dist);
+
+              save(); render();
+            }
+          }
+
+          state.lastLat = latitude;
+          state.lastLon = longitude;
+          state.lastTime = t;
+          state.lastAcc = accuracy;
+          save();
+        },
+        (err)=>{
+          alert("GPS error: " + (err && err.message ? err.message : "unknown"));
+          stopTracking(true);
+        },
+        { enableHighAccuracy:true, maximumAge: 2000, timeout: 15000 }
+      );
+
+      runtimeTick = setInterval(()=>{
+        if(!state.tracking) return;
+        state.totalRuntimeSec += 1;
+        save(); render();
+      }, 1000);
     }
 
-    state.lastLat = latitude;
-    state.lastLon = longitude;
-    state.lastAcc = accuracy;
-  }
+    function stopTracking(silent=false){
+      state.tracking = false;
 
-  function onErr(err){
-    elGps.textContent = "GPS: Blocked";
-    // If location is denied, stop cleanly
-    if (err && err.code === 1) stop();
-  }
+      if(watchId != null){
+        try { navigator.geolocation.clearWatch(watchId); } catch {}
+        watchId = null;
+      }
+      if(runtimeTick != null){
+        clearInterval(runtimeTick);
+        runtimeTick = null;
+      }
 
-  function render(){
-    elEngine.textContent = fmtMiles(state.engineMiles || 0, 1);
-    elTrip.textContent = fmtMiles(state.tripMiles || 0, 2);
-
-    if (state.running && state.startTime){
-      elDur.textContent = fmtTime(Date.now() - state.startTime);
-    } else {
-      elDur.textContent = "00:00:00";
+      save(); render();
+      if(!silent) { /* no alert */ }
     }
-  }
 
-  // Button toggle
-  btn.addEventListener("click", () => {
-    if (state.running) stop();
-    else start();
-  });
+    btnStart.addEventListener("click", ()=>{
+      if(state.tracking) stopTracking();
+      else startTracking();
+    });
 
-  // Init
-  setBtn(!!state.running);
-  if (state.running){
-    // If the page reloads while "running", we stop safely
-    stop();
-  } else {
+    // If it was tracking and you reload, we force it off (safer)
+    if(state.tracking){
+      state.tracking = false;
+      save();
+    }
+
     render();
-  }
-})();
-</script>
+  </script>
 </body>
 </html>
