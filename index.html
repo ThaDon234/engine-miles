@@ -3,260 +3,716 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-
   <title>N54 Mileage Tracker</title>
 
-  <!-- PWA-ish -->
+  <!-- iOS Home Screen / icon -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#050607">
-  <link rel="apple-touch-icon" href="icon.png">
-  <link rel="icon" type="image/png" href="icon.png">
+  <meta name="theme-color" content="#000000">
+  <link rel="apple-touch-icon" href="./icon.png">
+  <link rel="icon" type="image/png" href="./icon.png">
 
   <style>
     :root{
-      --bg0:#050607;
-      --bg1:#0b0e10;
-      --card: rgba(255,255,255,.06);
-      --card2: rgba(255,255,255,.075);
-      --stroke: rgba(255,255,255,.10);
-      --text: rgba(255,255,255,.92);
-      --muted: rgba(255,255,255,.60);
-      --muted2: rgba(255,255,255,.45);
-
-      --red:#ff2a2a;
-      --red2:#c40012;
-      --shadow: 0 18px 45px rgba(0,0,0,.55);
-      --shadow2: 0 10px 25px rgba(0,0,0,.55);
+      --bg0:#060607;
+      --bg1:#0b0c0f;
+      --card: rgba(30,30,34,0.55);
+      --card2: rgba(22,22,26,0.62);
+      --stroke: rgba(255,255,255,0.10);
+      --text:#f2f2f2;
+      --muted: rgba(255,255,255,0.60);
+      --muted2: rgba(255,255,255,0.42);
+      --red:#e1171c;
+      --red2:#ff3b30;
+      --shadow: 0 18px 60px rgba(0,0,0,0.65);
       --radius: 22px;
+      --radius2: 18px;
     }
 
     *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
     html,body{ height:100%; }
     body{
       margin:0;
-      font-family: system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
       color:var(--text);
-      background: radial-gradient(1200px 900px at 50% -10%, #1a1f24 0%, var(--bg0) 45%, #000 100%);
+      background: radial-gradient(1100px 600px at 50% 10%, #1a1c23 0%, #0a0b0f 45%, #050506 100%);
       overflow-x:hidden;
     }
 
-    /* subtle carbon overlay (NOT too much) */
-    .carbon{
+    /* subtle carbon-ish overlay (not too heavy) */
+    .bgOverlay{
       position:fixed; inset:0;
-      pointer-events:none;
-      opacity:.10; /* <-- control “carbon amount” */
       background:
+        radial-gradient(900px 460px at 50% 25%, rgba(255,255,255,0.06), transparent 60%),
+        linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.00) 55%),
         repeating-linear-gradient(135deg,
-          rgba(255,255,255,.10) 0px,
-          rgba(255,255,255,.10) 10px,
-          rgba(0,0,0,.20) 10px,
-          rgba(0,0,0,.20) 20px
+          rgba(255,255,255,0.06) 0px,
+          rgba(255,255,255,0.06) 9px,
+          rgba(0,0,0,0.00) 9px,
+          rgba(0,0,0,0.00) 22px
         );
-      mix-blend-mode: overlay;
-      filter: blur(.2px);
-    }
-
-    /* soft vignette */
-    .vignette{
-      position:fixed; inset:0;
+      opacity:0.35;
       pointer-events:none;
-      background: radial-gradient(70% 55% at 50% 40%, rgba(0,0,0,0) 0%, rgba(0,0,0,.55) 70%, rgba(0,0,0,.85) 100%);
+      filter: blur(0.0px);
     }
 
     /* splash */
     .splash{
       position:fixed; inset:0;
-      display:flex; align-items:center; justify-content:center;
-      background: radial-gradient(900px 700px at 50% 40%, #14191e 0%, #050607 60%, #000 100%);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: radial-gradient(1000px 700px at 50% 20%, #161823 0%, #07070a 55%, #050506 100%);
       z-index:9999;
       transition: opacity .35s ease, transform .35s ease;
     }
     .splash.hide{ opacity:0; transform: scale(1.02); pointer-events:none; }
     .splash img{
-      width:240px; max-width:70vw;
-      border-radius:20px;
-      box-shadow: 0 30px 70px rgba(0,0,0,.65);
+      width:min(260px, 68vw);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      filter: drop-shadow(0 12px 40px rgba(0,0,0,0.8));
     }
 
     .wrap{
-      position:relative;
-      padding: 22px 18px 28px;
-      padding-top: calc(18px + env(safe-area-inset-top));
-      padding-bottom: calc(18px + env(safe-area-inset-bottom));
-      max-width: 520px;
-      margin: 0 auto;
-    }
-
-    .logoBox{
+      min-height:100%;
+      padding: calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 22px);
       display:flex;
       justify-content:center;
-      margin-top: 14px;
-      margin-bottom: 12px;
     }
-    .logoBox img{
-      width: 245px;
-      max-width: 76%;
-      border-radius: 18px;
+
+    .panel{
+      width:min(430px, 100%);
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+      align-items:center;
+    }
+
+    .logo{
+      width:min(270px, 68vw);
+      border-radius: 20px;
       box-shadow: var(--shadow);
+      opacity:0.92;
+      margin-top: 2px;
     }
 
     .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
+      width:100%;
+      background: var(--card);
       border: 1px solid var(--stroke);
       border-radius: var(--radius);
-      box-shadow: var(--shadow2);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      overflow:hidden;
     }
 
     .mainCard{
-      padding: 16px 16px 14px;
-      margin: 10px 0 14px;
+      padding:18px 16px 16px;
       text-align:center;
     }
-
     .label{
       font-size: 15px;
       letter-spacing: .2px;
       color: var(--muted);
-      margin-top: 2px;
       margin-bottom: 8px;
     }
 
-    .milesRow{
-      display:flex;
-      align-items:baseline;
-      justify-content:center;
-      gap: 10px;
-      margin-top: 6px;
-      margin-bottom: 8px;
-    }
-    .bigMiles{
+    .milesValue{
       font-size: 64px;
-      line-height: 1;
+      line-height: 1.0;
       font-weight: 900;
-      letter-spacing: -1px;
-      text-shadow: 0 10px 25px rgba(0,0,0,.65);
+      letter-spacing: -1.2px;
+      text-shadow: 0 12px 36px rgba(0,0,0,0.65);
     }
     .unit{
-      font-size: 18px;
+      margin-top: 6px;
+      font-size: 16px;
       color: var(--muted);
-      margin-bottom: 9px;
     }
 
-    /* red “glow line” */
+    /* glowing red line */
     .glowLine{
-      height: 4px;
-      margin: 10px 6px 10px;
+      margin: 14px auto 10px;
+      width: 92%;
+      height: 3px;
       border-radius: 999px;
       background: linear-gradient(90deg,
-        rgba(255,42,42,0) 0%,
-        rgba(255,42,42,.55) 20%,
-        rgba(255,42,42,1) 50%,
-        rgba(255,42,42,.55) 80%,
-        rgba(255,42,42,0) 100%
+        rgba(255,59,48,0.00),
+        rgba(255,59,48,0.60),
+        rgba(255,59,48,0.95),
+        rgba(255,59,48,0.60),
+        rgba(255,59,48,0.00)
       );
-      box-shadow: 0 0 18px rgba(255,42,42,.35);
-      opacity: .85;
+      box-shadow:
+        0 0 18px rgba(255,59,48,0.45),
+        0 0 40px rgba(255,59,48,0.15);
+      opacity: 0.95;
     }
 
     .sub{
-      color: var(--muted);
       font-size: 15px;
+      color: var(--muted);
+      margin-top: 6px;
     }
 
     .grid3{
+      width:100%;
       display:grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-top: 10px;
+      gap:12px;
     }
 
     .tile{
+      background: var(--card2);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius2);
+      box-shadow: 0 14px 40px rgba(0,0,0,0.55);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       padding: 14px 12px 12px;
       text-align:center;
     }
 
-    .iconTop{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      margin-bottom: 8px;
-    }
-    .iconTop svg{
-      width: 26px;
-      height: 26px;
-      stroke: var(--red);
-      fill: none;
-      filter: drop-shadow(0 0 10px rgba(255,42,42,.25));
-    }
-
-    .tLabel{
-      font-size: 14px;
-      color: var(--muted);
-      margin-bottom: 4px;
-      line-height: 1.1;
+    .tIcon{
+      width: 26px; height: 26px;
+      margin: 0 auto 8px;
+      display:block;
+      color: var(--red2);
+      filter: drop-shadow(0 0 12px rgba(255,59,48,0.25));
     }
     .tVal{
-      font-size: 28px;
+      font-size: 26px;
       font-weight: 900;
-      letter-spacing: -.2px;
-      margin-bottom: 2px;
+      letter-spacing: -.3px;
     }
     .tUnit{
-      font-size: 13px;
+      font-size: 14px;
       color: var(--muted2);
-      margin-top: 2px;
+      margin-top: 4px;
+      letter-spacing: .2px;
+      text-transform: lowercase;
     }
 
     .bigBtn{
       width:100%;
-      margin: 14px 0 12px;
-      padding: 16px 18px;
+      border:none;
       border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: linear-gradient(180deg, rgba(255,42,42,1), rgba(196,0,18,1));
-      color: #fff;
-      font-weight: 900;
+      padding: 18px 18px;
       font-size: 20px;
-      letter-spacing: .7px;
-      box-shadow: 0 18px 50px rgba(255,42,42,.18), 0 20px 60px rgba(0,0,0,.55);
-      cursor:pointer;
+      font-weight: 900;
+      letter-spacing: 1.2px;
+      color: #fff;
+      background: radial-gradient(120% 200% at 50% 0%,
+        rgba(255,255,255,0.20) 0%,
+        rgba(255,255,255,0.00) 45%
+      ),
+      linear-gradient(180deg, #ff3b30 0%, #c70f13 100%);
+      box-shadow:
+        0 18px 50px rgba(255,59,48,0.22),
+        0 12px 34px rgba(0,0,0,0.75);
       display:flex;
       align-items:center;
       justify-content:center;
       gap:10px;
-      text-transform: uppercase;
     }
     .bigBtn:active{ transform: translateY(1px); }
+    .bigBtn.secondary{
+      background: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.03) 100%);
+      border: 1px solid var(--stroke);
+      box-shadow: 0 14px 38px rgba(0,0,0,0.65);
+      color: #fff;
+    }
 
-    .miniRow{
+    .row3{
+      width:100%;
       display:grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 12px;
-      margin-bottom: 10px;
     }
 
     .miniBtn{
-      padding: 12px 10px;
-      border-radius: 16px;
-      border: 1px solid var(--stroke);
-      background: linear-gradient(180deg, rgba(255,255,255,.065), rgba(255,255,255,.035));
-      color: var(--text);
-      box-shadow: 0 12px 28px rgba(0,0,0,.45);
-      cursor:pointer;
-
+      border:none;
+      border-radius: 999px;
+      padding: 14px 12px;
+      background: rgba(20,20,24,0.65);
+      border: 1px solid rgba(255,255,255,0.10);
+      color:#fff;
+      font-weight: 800;
       display:flex;
       align-items:center;
       justify-content:center;
-      gap: 8px;
-      font-weight: 800;
+      gap:10px;
+      box-shadow: 0 12px 34px rgba(0,0,0,0.6);
     }
     .miniBtn:active{ transform: translateY(1px); }
 
-    .miniBtn svg{
-      width: 20px;
-      height: 20px;
-      stroke: var(--red);
-      fill: none;
+    .bIcon{
+      width: 20px; height: 20px;
+      color: var(--red2);
+      filter: drop-shadow(0 0 10px rgba(255,59,48,0.25));
+      flex: 0 0 auto;
+    }
+
+    .footer{
+      margin-top: 2px;
+      font-size: 14px;
+      color: rgba(255,255,255,0.45);
+      text-align:center;
+    }
+
+    /* modal */
+    .modalBack{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,0.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index: 9998;
+    }
+    .modalBack.show{ display:flex; }
+    .modal{
+      width:min(420px, 100%);
+      background: rgba(16,16,18,0.92);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 18px;
+      box-shadow: 0 22px 70px rgba(0,0,0,0.8);
+      padding: 16px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    .mTitle{
+      font-weight: 900;
+      letter-spacing: .3px;
+      margin-bottom: 10px;
+    }
+    .mRow{
+      display:flex;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    input{
+      width:100%;
+      padding: 14px 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.35);
+      color:#fff;
+      font-size: 16px;
+      outline:none;
+    }
+    .mBtn{
+      flex:1;
+      padding: 12px 12px;
+      border-radius: 12px;
+      border:none;
+      font-weight: 900;
+      background: linear-gradient(180deg, #ff3b30 0%, #c70f13 100%);
+      color:#fff;
+    }
+    .mBtn.gray{
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .hint{
+      margin-top: 8px;
+      color: rgba(255,255,255,0.55);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bgOverlay"></div>
+
+  <!-- splash -->
+  <div class="splash" id="splash">
+    <img src="./icon.png" alt="N54">
+  </div>
+
+  <div class="wrap">
+    <div class="panel">
+
+      <img class="logo" src="./icon.png" alt="N54">
+
+      <div class="card mainCard">
+        <div class="label">Current Engine Miles</div>
+        <div class="milesValue" id="engineMiles">0.0</div>
+        <div class="unit">miles</div>
+
+        <div class="glowLine"></div>
+
+        <div class="sub">Trip Miles: <span id="tripMiles">0.0</span></div>
+      </div>
+
+      <div class="grid3">
+        <div class="tile">
+          <!-- clock icon -->
+          <svg class="tIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M12 7v6l4 2"></path>
+          </svg>
+          <div class="tVal" id="totalRuntime">00:00:00</div>
+          <div class="tUnit">runtime</div>
+        </div>
+
+        <div class="tile">
+          <!-- pin icon -->
+          <svg class="tIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s7-7 7-12a7 7 0 0 0-14 0c0 5 7 12 7 12z"></path>
+            <circle cx="12" cy="10" r="2.5"></circle>
+          </svg>
+          <div class="tVal"><span id="totalTracked">0.0</span></div>
+          <div class="tUnit">tracked</div>
+        </div>
+
+        <div class="tile">
+          <!-- gauge icon -->
+          <svg class="tIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 16a9 9 0 0 1 14 0"></path>
+            <path d="M12 13l4-4"></path>
+            <path d="M4 16v2h16v-2"></path>
+          </svg>
+          <div class="tVal"><span id="sessionMiles">0.0</span></div>
+          <div class="tUnit">session</div>
+        </div>
+      </div>
+
+      <button class="bigBtn" id="btnStart">
+        <span>▶</span>
+        <span id="btnStartText">START TRACKING</span>
+      </button>
+
+      <div class="row3">
+        <button class="miniBtn" id="btnSet">
+          <!-- wrench -->
+          <svg class="bIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14.7 6.3a5 5 0 0 0-6.9 6.9L3 18l3 3 4.8-4.8a5 5 0 0 0 6.9-6.9l-3 3-3-3 3-3z"></path>
+          </svg>
+          <span>Adjust</span>
+        </button>
+
+        <button class="miniBtn" id="btnAddSub">
+          <!-- plus/minus -->
+          <svg class="bIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 8h12"></path>
+            <path d="M6 16h12"></path>
+            <path d="M12 6v4"></path>
+          </svg>
+          <span>Add/Sub</span>
+        </button>
+
+        <button class="miniBtn" id="btnClear">
+          <!-- trash -->
+          <svg class="bIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18"></path>
+            <path d="M8 6V4h8v2"></path>
+            <path d="M19 6l-1 16H6L5 6"></path>
+            <path d="M10 11v6"></path>
+            <path d="M14 11v6"></path>
+          </svg>
+          <span>Clear</span>
+        </button>
+      </div>
+
+      <div class="footer">Runs on your device • localStorage • no account</div>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  <div class="modalBack" id="modalBack">
+    <div class="modal" id="modal">
+      <div class="mTitle" id="modalTitle">Set Miles</div>
+      <input id="modalInput" type="number" step="0.1" placeholder="Enter miles (e.g. 96100)" inputmode="decimal">
+      <div class="mRow">
+        <button class="mBtn gray" id="modalCancel">Cancel</button>
+        <button class="mBtn" id="modalOk">Save</button>
+      </div>
+      <div class="hint" id="modalHint"></div>
+    </div>
+  </div>
+
+  <script>
+    // ---- storage keys ----
+    const KEY = "n54_miles_v2";
+
+    function loadState(){
+      try{
+        const raw = localStorage.getItem(KEY);
+        if(!raw) return null;
+        return JSON.parse(raw);
+      }catch(e){ return null; }
+    }
+    function saveState(s){
+      localStorage.setItem(KEY, JSON.stringify(s));
+    }
+
+    // ---- state ----
+    let state = loadState() || {
+      engineMiles: 0.0,
+      totalTracked: 0.0,
+      totalRuntimeSec: 0,
+      sessionMiles: 0.0,
+      tripMiles: 0.0,
+      tracking: false,
+      lastLat: null,
+      lastLon: null,
+      lastGoodTime: null,
+    };
+
+    // ---- elements ----
+    const elEngine = document.getElementById("engineMiles");
+    const elTrip = document.getElementById("tripMiles");
+    const elTotalTracked = document.getElementById("totalTracked");
+    const elSession = document.getElementById("sessionMiles");
+    const elRuntime = document.getElementById("totalRuntime");
+    const btnStart = document.getElementById("btnStart");
+    const btnStartText = document.getElementById("btnStartText");
+
+    // modal
+    const modalBack = document.getElementById("modalBack");
+    const modalTitle = document.getElementById("modalTitle");
+    const modalInput = document.getElementById("modalInput");
+    const modalHint = document.getElementById("modalHint");
+    const modalCancel = document.getElementById("modalCancel");
+    const modalOk = document.getElementById("modalOk");
+
+    // ---- helpers ----
+    const fmt1 = (n)=> (Math.round((n + Number.EPSILON)*10)/10).toFixed(1);
+    const pad2 = (n)=> String(n).padStart(2,"0");
+    function secToHMS(sec){
+      sec = Math.max(0, Math.floor(sec));
+      const h = Math.floor(sec/3600);
+      const m = Math.floor((sec%3600)/60);
+      const s = sec%60;
+      return `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
+    }
+
+    // simple iOS haptic (works only if allowed)
+    function haptic(type="light"){
+      try{
+        if(navigator.vibrate){
+          navigator.vibrate(type==="heavy" ? 25 : 10);
+        }
+      }catch(e){}
+    }
+
+    function render(){
+      elEngine.textContent = fmt1(state.engineMiles);
+      elTrip.textContent = fmt1(state.tripMiles);
+      elTotalTracked.textContent = fmt1(state.totalTracked);
+      elSession.textContent = fmt1(state.sessionMiles);
+      elRuntime.textContent = secToHMS(state.totalRuntimeSec);
+
+      btnStartText.textContent = state.tracking ? "STOP TRACKING" : "START TRACKING";
+      btnStart.classList.toggle("secondary", state.tracking);
+    }
+
+    // ---- GPS tracking ----
+    let watchId = null;
+    let runtimeTimer = null;
+
+    function haversineMiles(lat1, lon1, lat2, lon2){
+      const R = 3958.8; // miles
+      const toRad = (d)=> d*Math.PI/180;
+      const dLat = toRad(lat2-lat1);
+      const dLon = toRad(lon2-lon1);
+      const a =
+        Math.sin(dLat/2)*Math.sin(dLat/2) +
+        Math.cos(toRad(lat1))*Math.cos(toRad(lat2)) *
+        Math.sin(dLon/2)*Math.sin(dLon/2);
+      const c = 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R*c;
+    }
+
+    function startRuntime(){
+      if(runtimeTimer) return;
+      runtimeTimer = setInterval(()=>{
+        state.totalRuntimeSec += 1;
+        saveState(state);
+        render();
+      }, 1000);
+    }
+    function stopRuntime(){
+      if(runtimeTimer){
+        clearInterval(runtimeTimer);
+        runtimeTimer = null;
+      }
+    }
+
+    function startTracking(){
+      if(!navigator.geolocation){
+        alert("GPS not available on this device.");
+        return;
+      }
+
+      state.tracking = true;
+      state.sessionMiles = 0.0;
+      state.tripMiles = 0.0;
+      state.lastLat = null;
+      state.lastLon = null;
+
+      saveState(state);
+      render();
+      haptic("light");
+
+      startRuntime();
+
+      watchId = navigator.geolocation.watchPosition(
+        (pos)=>{
+          const { latitude, longitude, accuracy } = pos.coords;
+
+          // basic accuracy filter (ignore bad points)
+          if(typeof accuracy === "number" && accuracy > 80){
+            return;
+          }
+
+          if(state.lastLat == null){
+            state.lastLat = latitude;
+            state.lastLon = longitude;
+            saveState(state);
+            return;
+          }
+
+          const d = haversineMiles(state.lastLat, state.lastLon, latitude, longitude);
+
+          // ignore tiny noise + insane jumps
+          if(d < 0.01 || d > 1.5){
+            state.lastLat = latitude;
+            state.lastLon = longitude;
+            saveState(state);
+            return;
+          }
+
+          state.lastLat = latitude;
+          state.lastLon = longitude;
+
+          state.engineMiles += d;
+          state.totalTracked += d;
+          state.sessionMiles += d;
+          state.tripMiles += d;
+
+          saveState(state);
+          render();
+        },
+        (err)=>{
+          // if permission denied or error, stop tracking
+          console.log(err);
+          stopTracking();
+          alert("GPS error. Make sure Location is allowed for Safari.");
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 800,
+          timeout: 15000
+        }
+      );
+    }
+
+    function stopTracking(){
+      state.tracking = false;
+      saveState(state);
+      render();
+      haptic("heavy");
+
+      if(watchId != null){
+        navigator.geolocation.clearWatch(watchId);
+        watchId = null;
+      }
+      stopRuntime();
+    }
+
+    // ---- modal control ----
+    let modalMode = "set"; // "set" | "addsub"
+    function openModal(mode){
+      modalMode = mode;
+      modalInput.value = "";
+      modalHint.textContent = "";
+
+      if(mode === "set"){
+        modalTitle.textContent = "Set Current Engine Miles";
+        modalInput.placeholder = "Example: 96100";
+        modalHint.textContent = "Sets the odometer value stored in the app.";
+      } else {
+        modalTitle.textContent = "Add / Subtract Miles";
+        modalInput.placeholder = "Example: +100 or -25";
+        modalHint.textContent = "Use a negative number to subtract.";
+      }
+
+      modalBack.classList.add("show");
+      setTimeout(()=> modalInput.focus(), 50);
+    }
+
+    function closeModal(){
+      modalBack.classList.remove("show");
+    }
+
+    modalCancel.addEventListener("click", ()=>{ haptic("light"); closeModal(); });
+    modalBack.addEventListener("click", (e)=>{
+      if(e.target === modalBack){ closeModal(); }
+    });
+
+    modalOk.addEventListener("click", ()=>{
+      const val = parseFloat(modalInput.value);
+      if(Number.isNaN(val)){
+        modalHint.textContent = "Enter a valid number.";
+        return;
+      }
+
+      if(modalMode === "set"){
+        state.engineMiles = Math.max(0, val);
+      } else {
+        state.engineMiles = Math.max(0, state.engineMiles + val);
+      }
+
+      saveState(state);
+      render();
+      haptic("light");
+      closeModal();
+    });
+
+    // ---- buttons ----
+    document.getElementById("btnSet").addEventListener("click", ()=>{ haptic("light"); openModal("set"); });
+    document.getElementById("btnAddSub").addEventListener("click", ()=>{ haptic("light"); openModal("addsub"); });
+
+    document.getElementById("btnClear").addEventListener("click", ()=>{
+      haptic("heavy");
+      const ok = confirm("Clear all saved data? This resets miles, runtime, and totals.");
+      if(!ok) return;
+
+      stopTracking();
+      state = {
+        engineMiles: 0.0,
+        totalTracked: 0.0,
+        totalRuntimeSec: 0,
+        sessionMiles: 0.0,
+        tripMiles: 0.0,
+        tracking: false,
+        lastLat: null,
+        lastLon: null,
+        lastGoodTime: null,
+      };
+      saveState(state);
+      render();
+    });
+
+    btnStart.addEventListener("click", ()=>{
+      if(state.tracking) stopTracking();
+      else startTracking();
+    });
+
+    // ---- splash hide ----
+    const splash = document.getElementById("splash");
+    window.addEventListener("load", ()=>{
+      setTimeout(()=> splash.classList.add("hide"), 550);
+    });
+
+    // first render
+    render();
+  </script>
+</body>
+</html>
