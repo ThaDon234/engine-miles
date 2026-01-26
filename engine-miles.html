@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Engine Miles Tracker (Private)</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Arial, sans-serif; margin: 18px; line-height: 1.25; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 14px; margin: 12px 0; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    input, button { font-size: 16px; padding: 10px; border-radius: 10px; border: 1px solid #ccc; }
+    button { cursor: pointer; border: 0; }
+    button.primary { background: #111; color: #fff; }
+    button.warn { background: #b00020; color: #fff; }
+    button.gray { background: #eee; color: #111; }
+    .big { font-size: 28px; font-weight: 800; }
+    .muted { color: #666; }
+    .ok { color: #0a7; font-weight: 700; }
+    .bad { color: #b00020; font-weight: 700; }
+    code { background: #f6f6f6; padding: 2px 6px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h2>Engine Miles Tracker (Private)</h2>
+  <div class="muted">Runs on your device. Saves to <code>localStorage</code> (no account, no sharing).</div>
+
+  <div class="card">
+    <div class="muted">Current engine miles</div>
+    <div class="big" id="engineMiles">0.0</div>
+    <div class="muted">Trip miles (this session): <span id="tripMiles">0.00</span></div>
+    <div class="muted">GPS status: <span id="gpsStatus" class="bad">Not started</span></div>
+  </div>
+
+  <div class="card">
+    <h3>Set / adjust miles</h3>
+    <div class="row">
+      <input id="setMiles" type="number" step="0.1" placeholder="Set engine miles (exact)" />
+      <button class="primary" id="btnSet">Set</button>
+    </div>
+    <div class="row" style="margin-top:10px;">
+      <input id="addMiles" type="number" step="0.01" placeholder="Add/Subtract miles (ex: 12.3 or -0.5)" />
+      <button class="gray" id="btnAdd">Apply</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Auto-add miles while driving (GPS)</h3>
+    <div class="muted">
+      Use on your phone. You must allow Location. Best accuracy when you’re outside with good signal.
+    </div>
+    <div class="row" style="margin-top:10px;">
+      <button class="primary" id="btnStart">Start Tracking</button>
+      <button class="gray" id="btnStop">Stop</button>
+      <button class="gray" id="btnResetTrip">Reset Trip</button>
+    </div>
+    <div class="muted" style="margin-top:10px;">
+      We ignore bad GPS points and only count distance when accuracy is decent.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Backup / restore</h3>
+    <div class="row">
+      <button class="gray" id="btnExport">Export JSON</button>
+      <input id="importBox" type="text" placeholder="Paste JSON here to import" style="flex:1; min-width: 220px;" />
+      <button class="primary" id="btnImport">Import</button>
+    </div>
+    <div class="row" style="margin-top:10px;">
+      <button class="warn" id="btnClear">Clear All Data</button>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // -------- storage --------
+  const KEY = "engine_miles_tracker_v1";
+  const state = load() || {
+    engineMiles: 0,
+    tripMiles: 0,
+    lastLat: null,
+    lastLon: null,
+    lastTime: null,
+    lastAcc: null
+  };
+
+  // -------- UI elements --------
+  const elEngine = document.getElementById("engineMiles");
+  const elTrip = document.getElementById("tripMiles");
+  const elStatus = document.getElementById("gpsStatus");
+  const setMiles = document.getElementById("setMiles");
+  const addMiles = document.getElementById("addMiles");
+
+  const btnSet = document.getElementById("btnSet");
+  const btnAdd = document.getElementById("btnAdd");
+  const btnStart = document.getElementById("btnStart");
+  const btnStop = document.getElementById("btnStop");
+  const btnResetTrip = document.getElementById("btnResetTrip");
+
+  const btnExport = document.getElementById("btnExport");
+  const btnImport = document.getElementById("btnImport");
+  const importBox = document.getElementById("importBox");
+  const btnClear = document.getElementById("btnClear");
+
+  let watchId = null;
+
+  // -------- helpers --------
+  function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+  function load() {
+    try { return JSON.parse(localStorage.getItem(KEY)); } catch { return null; }
+  }
+  function fmt(n, d=1) { return Number(n).toFixed(d); }
+
+  // Haversine distance in miles
+  function milesBetween(lat1, lon1, lat2, lon2) {
+    const Rm = 3958.7613; // Earth radius in miles
+    const toRad = x => x * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat/2) ** 2 +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * (Math.sin(dLon/2) ** 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return Rm * c;
+  }
+
+  function setStatus(text, ok=false) {
+    elStatus.textContent = text;
+    elStatus.className = ok ? "ok" : "bad";
+  }
+
+  function render() {
+    elEngine.textContent = fmt(state.engineMiles, 1);
+    elTrip.textContent = fmt(state.tripMiles, 2);
+  }
+
+  // -------- buttons --------
+  btnSet.onclick = () => {
+    const v = Number(setMiles.value);
+    if (!Number.isFinite(v) || v < 0) return alert("Enter a valid miles number.");
+    state.engineMiles = v;
+    save(); render();
+  };
+
+  btnAdd.onclick = () => {
+    const v = Number(addMiles.value);
+    if (!Number.isFinite(v)) return alert("Enter a valid number to add/subtract.");
+    state.engineMiles = Math.max(0, state.engineMiles + v);
+    save(); render();
+  };
+
+  btnResetTrip.onclick = () => {
+    state.tripMiles = 0;
+    state.lastLat = state.lastLon = state.lastTime = state.lastAcc = null;
+    save(); render();
+  };
+
+  btnExport.onclick = () => {
+    const data = JSON.stringify({
+      engineMiles: state.engineMiles,
+      tripMiles: state.tripMiles
+    });
+    navigator.clipboard?.writeText(data).catch(()=>{});
+    alert("Copied to clipboard:\n\n" + data);
+  };
+
+  btnImport.onclick = () => {
+    try {
+      const obj = JSON.parse(importBox.value.trim());
+      if (!obj || !Number.isFinite(obj.engineMiles)) throw new Error();
+      state.engineMiles = Math.max(0, Number(obj.engineMiles));
+      state.tripMiles = Number.isFinite(obj.tripMiles) ? Math.max(0, Number(obj.tripMiles)) : 0;
+      state.lastLat = state.lastLon = state.lastTime = state.lastAcc = null;
+      save(); render();
+      alert("Imported.");
+    } catch {
+      alert("Invalid JSON.");
+    }
+  };
+
+  btnClear.onclick = () => {
+    if (!confirm("Clear all saved miles?")) return;
+    localStorage.removeItem(KEY);
+    location.reload();
+  };
+
+  // -------- GPS tracking --------
+  function startTracking() {
+    if (!navigator.geolocation) {
+      setStatus("Geolocation not supported", false);
+      return;
+    }
+    if (watchId != null) return;
+
+    // For safety: reset last point when starting a new session
+    state.lastLat = state.lastLon = state.lastTime = state.lastAcc = null;
+    save(); render();
+
+    setStatus("Starting… allow Location", false);
+
+    watchId = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude, accuracy } = pos.coords;
+        const t = pos.timestamp;
+
+        // Ignore super-bad accuracy points (tweak if needed)
+        // 25m ~ 82ft is decent; 50-100m can be noisy in city
+        const maxAccMeters = 50;
+
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+
+        if (accuracy && accuracy > maxAccMeters) {
+          setStatus(`GPS ok but accuracy ${Math.round(accuracy)}m (waiting for better)`, false);
+          state.lastLat = latitude; state.lastLon = longitude; state.lastTime = t; state.lastAcc = accuracy;
+          save();
+          return;
+        }
+
+        if (state.lastLat != null && state.lastLon != null) {
+          const d = milesBetween(state.lastLat, state.lastLon, latitude, longitude);
+
+          // Filter out GPS jumps:
+          // - ignore tiny noise < 0.01 miles (~53 ft)
+          // - ignore big jumps > 1.0 miles between pings
+          if (d >= 0.01 && d <= 1.0) {
+            state.tripMiles += d;
+            state.engineMiles += d;
+            save(); render();
+          }
+        }
+
+        state.lastLat = latitude;
+        state.lastLon = longitude;
+        state.lastTime = t;
+        state.lastAcc = accuracy;
+
+        setStatus(`Tracking (accuracy ~${Math.round(accuracy || 0)}m)`, true);
+      },
+      (err) => {
+        setStatus(`GPS error: ${err.message}`, false);
+        watchId = null;
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 1000,
+        timeout: 10000
+      }
+    );
+  }
+
+  function stopTracking() {
+    if (watchId != null) navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+    setStatus("Stopped", false);
+  }
+
+  btnStart.onclick = startTracking;
+  btnStop.onclick = stopTracking;
+
+  // -------- init --------
+  render();
+})();
+</script>
+</body>
+</html>
