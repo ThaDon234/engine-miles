@@ -2,19 +2,26 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+
 <title>N54 Engine Miles</title>
 
+<!-- PWA / iOS -->
 <link rel="apple-touch-icon" href="icon.png">
-<link rel="icon" type="image/png" href="icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
 <style>
-*{box-sizing:border-box}
+:root{
+  --red:#e53935;
+  --dark:#0b0b0b;
+  --card:rgba(255,255,255,.08);
+  --glass:rgba(255,255,255,.12);
+}
+
+*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 body{
   margin:0;
-  font-family:-apple-system,BlinkMacSystemFont,system-ui;
   background:#000;
   color:#fff;
   overflow:hidden;
@@ -22,18 +29,16 @@ body{
 
 /* background */
 .bg{
-  position:fixed;
-  inset:0;
+  position:fixed;inset:0;
   background:
-    linear-gradient(180deg,rgba(0,0,0,.55),rgba(0,0,0,.85)),
-    repeating-linear-gradient(45deg,#111 0,#111 8px,#0a0a0a 8px,#0a0a0a 16px);
-  z-index:-2;
+    linear-gradient(135deg,rgba(255,255,255,.04),transparent),
+    repeating-linear-gradient(135deg,#000 0,#000 6px,#111 6px,#111 12px);
+  z-index:-1;
 }
 
 /* splash */
 .splash{
-  position:fixed;
-  inset:0;
+  position:fixed;inset:0;
   background:#000;
   display:flex;
   align-items:center;
@@ -41,52 +46,64 @@ body{
   z-index:99;
 }
 .splash img{
-  width:160px;
-  animation:fade 1.6s ease forwards;
-}
-@keyframes fade{
-  0%{opacity:0;transform:scale(.9)}
-  100%{opacity:1;transform:scale(1)}
+  width:220px;
+  filter:drop-shadow(0 0 25px rgba(229,57,53,.6));
 }
 
-/* main layout */
+/* layout */
 .wrap{
+  padding:20px;
   max-width:420px;
-  margin:0 auto;
-  padding:22px;
+  margin:auto;
 }
 
 .logo{
   display:block;
-  margin:18px auto 18px;
-  width:180px;
-  filter:drop-shadow(0 10px 25px rgba(0,0,0,.7));
+  margin:20px auto 10px;
+  width:200px;
 }
 
 /* cards */
 .card{
-  background:rgba(255,255,255,.05);
+  background:var(--card);
   border-radius:18px;
-  padding:20px;
-  box-shadow:0 20px 50px rgba(0,0,0,.7);
-  margin-bottom:18px;
+  padding:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,.6);
+  margin-bottom:16px;
 }
 
-.center{text-align:center}
-.label{opacity:.75;font-size:14px}
-.big{
-  font-size:48px;
+.label{
+  text-align:center;
+  opacity:.8;
+}
+
+.bigMiles{
+  font-size:56px;
   font-weight:800;
-  letter-spacing:.5px;
-}
-.unit{opacity:.6;font-size:14px}
-.redline{
-  height:2px;
-  background:#e53935;
-  margin:10px 0;
+  text-align:center;
 }
 
-/* grid tiles */
+.unit{text-align:center;opacity:.7}
+
+.glow{
+  height:2px;
+  margin:12px 0;
+  background:linear-gradient(90deg,transparent,var(--red),transparent);
+  animation:pulse 2s infinite;
+}
+
+@keyframes pulse{
+  0%{opacity:.3}
+  50%{opacity:1}
+  100%{opacity:.3}
+}
+
+.sub{
+  text-align:center;
+  opacity:.8;
+}
+
+/* grid */
 .grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -94,58 +111,54 @@ body{
 }
 
 .tile{
-  background:rgba(255,255,255,.04);
+  background:var(--glass);
   border-radius:16px;
-  padding:14px;
+  padding:12px;
   text-align:center;
 }
 
 .icon{
-  width:30px;
-  height:30px;
-  margin:0 auto 6px;
-  background-size:30px;
-  background-repeat:no-repeat;
-  background-position:center;
+  font-size:22px;
+  color:var(--red);
+  margin-bottom:6px;
 }
 
-/* inline SVG icons */
-.clock{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' stroke='%23fff' fill='none' stroke-width='1.7' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v6l4 2'/%3E%3C/svg%3E")}
-.pin{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' stroke='%23fff' fill='none' stroke-width='1.7' viewBox='0 0 24 24'%3E%3Cpath d='M12 21s7-4.5 7-11a7 7 0 1 0-14 0c0 6.5 7 11 7 11z'/%3E%3Ccircle cx='12' cy='10' r='2'/%3E%3C/svg%3E")}
-.gauge{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' stroke='%23fff' fill='none' stroke-width='1.7' viewBox='0 0 24 24'%3E%3Cpath d='M6 15a8 8 0 1 1 12 0'/%3E%3Cpath d='M12 13l3-3'/%3E%3C/svg%3E")}
+.tVal{font-size:20px;font-weight:700}
 
 /* buttons */
-.mainBtn{
+.btn{
   width:100%;
-  padding:18px;
-  margin:20px 0 14px;
   border:none;
-  border-radius:30px;
-  background:linear-gradient(#ff4b4b,#c62828);
-  color:#fff;
-  font-size:20px;
-  font-weight:800;
+  border-radius:999px;
+  padding:16px;
+  font-size:18px;
+  font-weight:700;
+  margin:12px 0;
 }
 
-.rowBtns{
+.btn-main{
+  background:linear-gradient(180deg,#ff5f5f,#d32f2f);
+  color:#fff;
+  box-shadow:0 10px 30px rgba(229,57,53,.6);
+}
+
+.btn-row{
   display:grid;
   grid-template-columns:repeat(3,1fr);
   gap:10px;
 }
-.smallBtn{
-  background:rgba(255,255,255,.06);
+
+.btn-mini{
+  background:var(--glass);
   color:#fff;
-  border:none;
   padding:12px;
-  border-radius:16px;
-  font-size:13px;
+  font-size:14px;
 }
 
 .footer{
   text-align:center;
-  opacity:.5;
+  opacity:.6;
   font-size:12px;
-  margin-top:10px;
 }
 </style>
 </head>
@@ -153,88 +166,116 @@ body{
 <body>
 <div class="bg"></div>
 
+<!-- splash -->
 <div class="splash" id="splash">
-  <img src="icon.png">
+  <img src="icon.png" alt="N54">
 </div>
 
 <div class="wrap">
 
-<img src="icon.png" class="logo">
+<img class="logo" src="icon.png">
 
-<div class="card center">
+<div class="card">
   <div class="label">Current Engine Miles</div>
-  <div class="big" id="engineMiles">0</div>
+  <div class="bigMiles" id="engineMiles">0</div>
   <div class="unit">miles</div>
-  <div class="redline"></div>
-  <div class="label">Trip Miles: <span id="tripMiles">0.0</span></div>
+  <div class="glow"></div>
+  <div class="sub">Trip Miles: <span id="tripMiles">0.0</span></div>
 </div>
 
 <div class="grid">
   <div class="tile">
-    <div class="icon clock"></div>
-    <div class="label">Total Runtime</div>
-    <div id="runtime">00:00:00</div>
+    <div class="icon">⏱</div>
+    <div class="tVal" id="runtime">00:00:00</div>
+    <div class="unit">runtime</div>
   </div>
   <div class="tile">
-    <div class="icon pin"></div>
-    <div class="label">Total Tracked</div>
-    <div><span id="totalTracked">0.0</span> mi</div>
+    <div class="icon">📍</div>
+    <div class="tVal"><span id="totalMiles">0.0</span></div>
+    <div class="unit">tracked</div>
   </div>
   <div class="tile">
-    <div class="icon gauge"></div>
-    <div class="label">Session Miles</div>
-    <div><span id="sessionMiles">0.0</span> mi</div>
+    <div class="icon">🏁</div>
+    <div class="tVal"><span id="sessionMiles">0.0</span></div>
+    <div class="unit">session</div>
   </div>
 </div>
 
-<button class="mainBtn" onclick="toggle()">▶ START TRACKING</button>
+<button class="btn btn-main" id="startBtn">▶ START TRACKING</button>
 
-<div class="rowBtns">
-  <button class="smallBtn" onclick="setMiles()">Adjust Miles</button>
-  <button class="smallBtn" onclick="addMiles()">Add/Subtract</button>
-  <button class="smallBtn" onclick="clearAll()">Clear All</button>
+<div class="btn-row">
+  <button class="btn btn-mini" onclick="setMiles()">🔧 Adjust</button>
+  <button class="btn btn-mini" onclick="addSubtract()">➕➖ Add/Sub</button>
+  <button class="btn btn-mini" onclick="clearAll()">🗑 Clear</button>
 </div>
 
 <div class="footer">Runs on your device · localStorage · no account</div>
 </div>
 
 <script>
-let miles = Number(localStorage.engineMiles||0);
-let total = Number(localStorage.totalTracked||0);
-let running=false, start;
+let state = JSON.parse(localStorage.getItem("n54_state")) || {
+  engine:0,total:0,trip:0,runtime:0,running:false,last:null
+};
 
-engineMiles.textContent=miles;
+const em=document.getElementById("engineMiles");
+const tm=document.getElementById("tripMiles");
+const tot=document.getElementById("totalMiles");
+const ses=document.getElementById("sessionMiles");
+const run=document.getElementById("runtime");
 
-function toggle(){
-  if(!running){
-    running=true;
-    start=Date.now();
-  }else{
-    running=false;
-    let d=(Date.now()-start)/1000/3600*60;
-    miles+=d;
-    total+=d;
-    engineMiles.textContent=miles.toFixed(0);
-    localStorage.engineMiles=miles;
-    localStorage.totalTracked=total;
-  }
+function save(){localStorage.setItem("n54_state",JSON.stringify(state))}
+function vib(){navigator.vibrate?.(20)}
+
+function update(){
+  em.textContent=state.engine.toFixed(1);
+  tm.textContent=state.trip.toFixed(1);
+  tot.textContent=state.total.toFixed(1);
+  ses.textContent=state.trip.toFixed(1);
+  run.textContent=new Date(state.runtime*1000).toISOString().substr(11,8);
 }
+update();
+
+document.getElementById("startBtn").onclick=()=>{
+  vib();
+  state.running=!state.running;
+  state.last=Date.now();
+  document.getElementById("startBtn").textContent=
+    state.running?"⏸ PAUSE":"▶ START TRACKING";
+  save();
+};
+
+setInterval(()=>{
+  if(!state.running) return;
+  const now=Date.now();
+  const d=(now-state.last)/1000;
+  state.last=now;
+  state.runtime+=d;
+  const miles=d*0.008; // ~30mph avg
+  state.engine+=miles;
+  state.total+=miles;
+  state.trip+=miles;
+  update(); save();
+},1000);
 
 function setMiles(){
-  let v=prompt("Set engine miles:",miles);
-  if(v!==null){miles=Number(v);engineMiles.textContent=miles;localStorage.engineMiles=miles}
+  vib();
+  const v=prompt("Set engine miles:");
+  if(v!==null){state.engine=parseFloat(v)||0;update();save();}
 }
-function addMiles(){
-  let v=prompt("Add/Subtract miles (+/-):",0);
-  if(v!==null){miles+=Number(v);engineMiles.textContent=miles;localStorage.engineMiles=miles}
+function addSubtract(){
+  vib();
+  const v=prompt("Add / subtract miles:");
+  if(v!==null){state.engine+=parseFloat(v)||0;update();save();}
 }
 function clearAll(){
+  vib();
   if(confirm("Clear ALL data?")){
-    localStorage.clear();location.reload();
+    localStorage.removeItem("n54_state");
+    location.reload();
   }
 }
 
-setTimeout(()=>splash.style.display="none",1400);
+setTimeout(()=>document.getElementById("splash").style.display="none",1200);
 </script>
 </body>
 </html>
