@@ -1,318 +1,437 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>N54 Mileage Tracker</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>N54 Mileage Tracker</title>
 
-<!-- PWA -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- iOS "Add to Home Screen" -->
+  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="icon" type="image/png" href="icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0b0b0f">
 
-<style>
-:root {
-  --red: #e53935;
-  --card: rgba(20,20,20,.75);
-  --glass: rgba(255,255,255,.06);
-  --radius: 22px;
-}
+  <style>
+    :root{
+      --bg:#07070a;
+      --card: rgba(20,20,26,.68);
+      --card2: rgba(16,16,22,.58);
+      --stroke: rgba(255,255,255,.10);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.58);
+      --muted2: rgba(255,255,255,.42);
+      --red:#ff2a2a;
+      --red2:#c80000;
+      --shadow: 0 12px 40px rgba(0,0,0,.55);
+      --radius: 22px;
+    }
 
-* { box-sizing: border-box; }
+    *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+    html,body{ height:100%; margin:0; background:var(--bg); color:var(--text); font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; }
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
-  background: radial-gradient(circle at top, #1a1a1a, #000);
-  color: #fff;
-}
+    /* Background: subtle black fade + light carbon */
+    .bg{
+      position:fixed; inset:0; z-index:-2;
+      background:
+        radial-gradient(1200px 600px at 50% -10%, rgba(255,255,255,.08), transparent 60%),
+        radial-gradient(700px 420px at 10% 30%, rgba(255,0,0,.06), transparent 60%),
+        radial-gradient(900px 520px at 90% 70%, rgba(255,0,0,.04), transparent 60%),
+        linear-gradient(180deg, #06060a 0%, #0a0a10 35%, #050509 100%);
+    }
+    .bg:after{
+      content:"";
+      position:absolute; inset:0;
+      opacity:.18;
+      background:
+        repeating-linear-gradient(135deg, rgba(255,255,255,.08) 0 6px, rgba(255,255,255,0) 6px 18px);
+      mix-blend-mode: overlay;
+      filter: blur(.2px);
+    }
 
-/* ===== HEADER ===== */
-header {
-  display: flex;
-  align-items: center;
-  padding: 14px 16px;
-}
+    /* Splash */
+    .splash{
+      position:fixed; inset:0; z-index:50;
+      display:flex; align-items:center; justify-content:center;
+      background: #05050a;
+      transition: opacity .35s ease;
+    }
+    .splash.hide{ opacity:0; pointer-events:none; }
+    .splash img{
+      width:120px; height:120px; border-radius:26px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.7);
+      animation: pop .55s ease;
+    }
+    @keyframes pop{ from{ transform:scale(.86); opacity:.2 } to{ transform:scale(1); opacity:1 } }
 
-.menu-btn {
-  font-size: 22px;
-  cursor: pointer;
-}
+    .wrap{
+      padding: 18px 16px 28px;
+      padding-top: calc(18px + env(safe-area-inset-top));
+      padding-bottom: calc(28px + env(safe-area-inset-bottom));
+      max-width: 520px;
+      margin: 0 auto;
+    }
 
-.title {
-  flex: 1;
-  text-align: center;
-  font-weight: 700;
-  letter-spacing: .5px;
-}
+    /* Top bar */
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:12px; margin-bottom:14px;
+    }
+    .hambtn{
+      width:44px; height:44px; border-radius:14px;
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--stroke);
+      display:flex; align-items:center; justify-content:center;
+      box-shadow: var(--shadow);
+      cursor:pointer;
+    }
+    .title{
+      font-weight:900; letter-spacing:.12em;
+      font-size:16px; opacity:.9;
+      text-transform:uppercase;
+    }
+    .pill{
+      padding:10px 14px;
+      border-radius:999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--stroke);
+      box-shadow: var(--shadow);
+      font-size:13px;
+      color: var(--muted);
+      white-space:nowrap;
+    }
 
-.gps {
-  font-size: 13px;
-  opacity: .7;
-}
+    /* Hero image (tap to change) */
+    .hero{
+      margin: 12px 0 14px;
+      display:flex; flex-direction:column; align-items:center;
+    }
+    .heroImg{
+      width: 84%;
+      max-width: 360px;
+      aspect-ratio: 1 / 1;
+      border-radius: 26px;
+      overflow:hidden;
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 18px 70px rgba(0,0,0,.65);
+      background: rgba(255,255,255,.05);
+      cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      position:relative;
+    }
+    .heroImg img{
+      width:100%; height:100%;
+      object-fit: cover;
+      filter: saturate(.95) contrast(1.05);
+      opacity:.95;
+    }
+    .heroHint{
+      margin-top:10px;
+      font-size:12px;
+      color: var(--muted2);
+    }
 
-/* ===== SIDE MENU ===== */
-#sideMenu {
-  position: fixed;
-  top: 0; left: -260px;
-  width: 260px; height: 100%;
-  background: #0b0b0b;
-  padding: 20px;
-  transition: .3s;
-  z-index: 99;
-}
+    /* Cards */
+    .card{
+      background: var(--card);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 16px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .mainCard{
+      padding: 18px 18px 16px;
+    }
+    .label{
+      text-align:center;
+      font-size:18px;
+      letter-spacing:.02em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .miles{
+      text-align:center;
+      font-size: 84px;
+      font-weight: 900;
+      line-height: 1;
+      margin: 6px 0 0;
+    }
+    .unit{
+      text-align:center;
+      font-size: 20px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
 
-#sideMenu.open { left: 0; }
+    /* Glowing red line */
+    .glowline{
+      height: 3px;
+      margin: 16px auto 10px;
+      width: 92%;
+      border-radius: 999px;
+      background: linear-gradient(90deg,
+        rgba(255,42,42,0) 0%,
+        rgba(255,42,42,.55) 18%,
+        rgba(255,42,42,1) 50%,
+        rgba(255,42,42,.55) 82%,
+        rgba(255,42,42,0) 100%);
+      box-shadow:
+        0 0 10px rgba(255,42,42,.55),
+        0 0 26px rgba(255,42,42,.35),
+        0 0 52px rgba(255,42,42,.18);
+    }
 
-.menu-item {
-  padding: 14px 0;
-  border-bottom: 1px solid #222;
-  font-weight: 500;
-  cursor: pointer;
-}
+    .sub{
+      text-align:center;
+      font-size: 16px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+    .sub b{ color: var(--text); }
 
-/* ===== MAIN ===== */
-.container {
-  padding: 14px;
-  max-width: 420px;
-  margin: auto;
-}
+    /* Tiles row */
+    .tiles{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .tile{
+      background: var(--card2);
+      border: 1px solid rgba(255,255,255,.09);
+      border-radius: 20px;
+      padding: 14px 12px;
+      box-shadow: var(--shadow);
+      text-align:center;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .tileIcon{
+      width: 26px; height: 26px;
+      margin: 0 auto 8px;
+      display:block;
+      color: var(--red);
+      filter: drop-shadow(0 0 10px rgba(255,42,42,.25));
+    }
+    .tVal{
+      font-size: 40px;
+      font-weight: 900;
+      line-height: 1.05;
+      margin: 2px 0 6px;
+    }
+    .tSmall{
+      font-size: 18px;
+      color: var(--muted);
+      text-transform: lowercase;
+      letter-spacing:.02em;
+    }
 
-/* ===== IMAGE CARD ===== */
-.image-card {
-  background: var(--glass);
-  border-radius: var(--radius);
-  padding: 12px;
-  text-align: center;
-}
+    /* Buttons */
+    .btnBig{
+      margin-top: 16px;
+      height: 74px;
+      width: 100%;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: linear-gradient(180deg, rgba(255,42,42,.98), rgba(180,0,0,.98));
+      box-shadow:
+        0 16px 50px rgba(255,0,0,.18),
+        0 10px 25px rgba(0,0,0,.55);
+      color: white;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing:.08em;
+      text-transform: uppercase;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+    }
+    .btnBig:active{ transform: translateY(1px); }
 
-.image-card img {
-  width: 100%;
-  border-radius: 18px;
-}
+    .btnRow{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .btnSmall{
+      height: 58px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      font-weight: 800;
+      font-size: 18px;
+      display:flex; align-items:center; justify-content:center;
+      gap:10px;
+      cursor:pointer;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .btnSmall:active{ transform: translateY(1px); }
+    .btnIcon{
+      width: 22px; height:22px;
+      color: var(--red);
+      filter: drop-shadow(0 0 10px rgba(255,42,42,.25));
+    }
 
-.image-card small {
-  display: block;
-  opacity: .5;
-  margin-top: 6px;
-}
+    /* Snapshot button */
+    .btnWide{
+      margin-top: 12px;
+      width: 100%;
+      height: 62px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      font-weight: 900;
+      font-size: 18px;
+      display:flex; align-items:center; justify-content:center;
+      gap: 10px;
+      cursor:pointer;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
 
-/* ===== ENGINE MILES ===== */
-.main-card {
-  margin-top: 14px;
-  background: var(--card);
-  border-radius: var(--radius);
-  padding: 18px;
-  text-align: center;
-}
+    .meta{
+      margin-top:10px;
+      text-align:center;
+      color: var(--muted2);
+      font-size: 13px;
+      line-height: 1.4;
+    }
 
-.main-card h2 {
-  margin: 0;
-  font-size: 15px;
-  opacity: .6;
-}
+    /* Maintenance */
+    .section{
+      margin-top: 16px;
+    }
+    .sectionHead{
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom: 10px;
+    }
+    .sectionTitle{
+      font-size: 34px;
+      font-weight: 900;
+      letter-spacing:.01em;
+    }
+    .countPill{
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      color: var(--muted);
+      font-weight: 800;
+      font-size: 14px;
+    }
+    .sectionBody{
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.35;
+    }
+    .sectionButtons{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .btnGhost{
+      height: 58px;
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color: white;
+      font-weight: 900;
+      font-size: 16px;
+      cursor:pointer;
+      box-shadow: var(--shadow);
+    }
+    .btnRed{
+      height: 58px;
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,.14);
+      background: linear-gradient(180deg, rgba(255,42,42,.98), rgba(180,0,0,.98));
+      color: white;
+      font-weight: 900;
+      font-size: 16px;
+      cursor:pointer;
+      box-shadow: var(--shadow);
+    }
 
-.miles {
-  font-size: 56px;
-  font-weight: 800;
-}
+    /* Drawer menu */
+    .drawerBackdrop{
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 40;
+      display:none;
+    }
+    .drawerBackdrop.show{ display:block; }
 
-.unit { opacity: .5; }
+    .drawer{
+      position: fixed;
+      top: 0; left: 0;
+      width: 84%;
+      max-width: 360px;
+      height: 100%;
+      background: rgba(10,10,14,.92);
+      border-right: 1px solid rgba(255,255,255,.10);
+      box-shadow: 30px 0 60px rgba(0,0,0,.65);
+      z-index: 41;
+      transform: translateX(-102%);
+      transition: transform .22s ease;
+      padding: calc(16px + env(safe-area-inset-top)) 16px 16px;
+      overflow:auto;
+    }
+    .drawer.show{ transform: translateX(0); }
+    .drawerTop{
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom: 14px;
+    }
+    .drawerTop .dTitle{
+      font-weight: 900;
+      letter-spacing:.08em;
+      opacity:.95;
+    }
+    .xbtn{
+      width:42px; height:42px;
+      border-radius: 14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      cursor:pointer;
+    }
 
-/* 🔴 GLOW LINE */
-.glow-line {
-  height: 3px;
-  margin: 14px 0;
-  background: linear-gradient(
-    to right,
-    transparent,
-    var(--red),
-    transparent
-  );
-  box-shadow:
-    0 0 8px var(--red),
-    0 0 18px rgba(229,57,53,.8);
-}
+    .menuList{
+      display:flex; flex-direction:column; gap:10px;
+      margin-bottom: 12px;
+    }
+    .menuItem{
+      padding: 14px 14px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      font-weight: 900;
+      cursor:pointer;
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .menuItem small{ color: var(--muted); font-weight:800; }
 
-/* ===== STATS ===== */
-.stats {
-  display: grid;
-  grid-template-columns: repeat(3,1fr);
-  gap: 10px;
-  margin-top: 14px;
-}
+    .panel{
+      display:none;
+      margin-top: 12px;
+    }
+    .panel.show{ display:block; }
 
-.stat {
-  background: var(--card);
-  border-radius: 18px;
-  padding: 14px;
-  text-align: center;
-}
-
-.stat i {
-  color: var(--red);
-  font-size: 18px;
-}
-
-.stat .val {
-  font-size: 20px;
-  font-weight: 700;
-}
-
-/* ===== BUTTONS ===== */
-button {
-  border: none;
-  border-radius: 999px;
-  padding: 14px;
-  font-size: 16px;
-  cursor: pointer;
-}
-
-.primary {
-  background: linear-gradient(180deg,#ff4b4b,#b71c1c);
-  color: #fff;
-  font-weight: 700;
-  margin-top: 18px;
-  box-shadow: 0 10px 25px rgba(229,57,53,.6);
-}
-
-.row {
-  display: grid;
-  grid-template-columns: repeat(3,1fr);
-  gap: 10px;
-  margin-top: 14px;
-}
-
-.secondary {
-  background: var(--glass);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-/* ===== MAINTENANCE ===== */
-.section {
-  background: var(--card);
-  border-radius: var(--radius);
-  padding: 16px;
-  margin-top: 18px;
-}
-
-.section h3 {
-  margin: 0 0 10px;
-}
-
-.section button {
-  margin-top: 8px;
-}
-
-/* ===== FOOTER ===== */
-footer {
-  text-align: center;
-  font-size: 12px;
-  opacity: .5;
-  margin: 20px 0;
-}
-</style>
-</head>
-
-<body>
-
-<div id="sideMenu">
-  <div class="menu-item">Saved Files</div>
-  <div class="menu-item">Snapshots</div>
-  <div class="menu-item">About</div>
-  <div class="menu-item">Settings</div>
-  <div class="menu-item">Export</div>
-</div>
-
-<header>
-  <div class="menu-btn" onclick="toggleMenu()">☰</div>
-  <div class="title">N54 MILEAGE TRACKER</div>
-  <div class="gps">GPS: Stopped</div>
-</header>
-
-<div class="container">
-
-  <div class="image-card" onclick="pickImage()">
-    <img id="carImg" src="icon.png">
-    <small>Tap image to change (saved on this phone)</small>
-  </div>
-
-  <div class="main-card">
-    <h2>Current Engine Miles</h2>
-    <div class="miles" id="engineMiles">0.0</div>
-    <div class="unit">miles</div>
-    <div class="glow-line"></div>
-    <div class="unit">Trip Miles: <span id="tripMiles">0.0</span></div>
-  </div>
-
-  <div class="stats">
-    <div class="stat">
-      <i>⏱</i>
-      <div class="val" id="runtime">00:00:00</div>
-      <small>runtime</small>
-    </div>
-    <div class="stat">
-      <i>📍</i>
-      <div class="val" id="tracked">0.0</div>
-      <small>tracked</small>
-    </div>
-    <div class="stat">
-      <i>🏁</i>
-      <div class="val" id="session">0.0</div>
-      <small>session</small>
-    </div>
-  </div>
-
-  <button class="primary">▶ START TRACKING</button>
-
-  <div class="row">
-    <button class="secondary">📌 Adjust</button>
-    <button class="secondary">＋－ Add/Sub</button>
-    <button class="secondary">🗑 Clear</button>
-  </div>
-
-  <button class="secondary" style="margin-top:14px;">💾 Save Miles Snapshot</button>
-
-  <div class="section">
-    <h3>Maintenance Reminders</h3>
-    <p>No reminders yet.</p>
-    <button class="secondary">Add Reminder</button>
-    <button class="primary">Quick Add N54 Defaults</button>
-  </div>
-
-  <footer>
-    Runs on your device • localStorage + IndexedDB • no account
-  </footer>
-</div>
-
-<input type="file" id="imgPicker" accept="image/*" hidden>
-
-<script>
-function toggleMenu(){
-  document.getElementById("sideMenu").classList.toggle("open");
-}
-
-function pickImage(){
-  document.getElementById("imgPicker").click();
-}
-
-document.getElementById("imgPicker").addEventListener("change", e=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  const r = new FileReader();
-  r.onload = ()=> {
-    localStorage.setItem("carImg", r.result);
-    document.getElementById("carImg").src = r.result;
-  }
-  r.readAsDataURL(file);
-});
-
-const saved = localStorage.getItem("carImg");
-if(saved) document.getElementById("carImg").src = saved;
-</script>
-
-</body>
-</html>
+    /* Saved files inside menu only */
+    .fileBox{
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+     
