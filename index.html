@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>N54 Mileage Tracker</title>
 
-  <!-- iOS Home Screen / icon -->
+  <!-- iOS Home Screen -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#000000">
@@ -14,8 +14,6 @@
 
   <style>
     :root{
-      --bg0:#060607;
-      --bg1:#0b0c0f;
       --card: rgba(30,30,34,0.55);
       --card2: rgba(22,22,26,0.62);
       --stroke: rgba(255,255,255,0.10);
@@ -27,6 +25,8 @@
       --shadow: 0 18px 60px rgba(0,0,0,0.65);
       --radius: 22px;
       --radius2: 18px;
+      --ok: rgba(255,255,255,0.72);
+      --warn: #ffcc00;
     }
 
     *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
@@ -39,7 +39,7 @@
       overflow-x:hidden;
     }
 
-    /* subtle carbon-ish overlay (not too heavy) */
+    /* subtle carbon-ish overlay */
     .bgOverlay{
       position:fixed; inset:0;
       background:
@@ -51,9 +51,8 @@
           rgba(0,0,0,0.00) 9px,
           rgba(0,0,0,0.00) 22px
         );
-      opacity:0.35;
+      opacity:0.28;
       pointer-events:none;
-      filter: blur(0.0px);
     }
 
     /* splash */
@@ -80,7 +79,6 @@
       display:flex;
       justify-content:center;
     }
-
     .panel{
       width:min(430px, 100%);
       display:flex;
@@ -90,10 +88,10 @@
     }
 
     .logo{
-      width:min(270px, 68vw);
+      width:min(310px, 78vw);
       border-radius: 20px;
       box-shadow: var(--shadow);
-      opacity:0.92;
+      opacity:0.94;
       margin-top: 2px;
     }
 
@@ -107,7 +105,6 @@
       -webkit-backdrop-filter: blur(14px);
       overflow:hidden;
     }
-
     .mainCard{
       padding:18px 16px 16px;
       text-align:center;
@@ -118,7 +115,6 @@
       color: var(--muted);
       margin-bottom: 8px;
     }
-
     .milesValue{
       font-size: 64px;
       line-height: 1.0;
@@ -132,23 +128,51 @@
       color: var(--muted);
     }
 
-    /* glowing red line */
+    /* ✅ Fade-away light red line (glow + fade edges + shimmer) */
     .glowLine{
+      position: relative;
       margin: 14px auto 10px;
       width: 92%;
       height: 3px;
       border-radius: 999px;
       background: linear-gradient(90deg,
         rgba(255,59,48,0.00),
-        rgba(255,59,48,0.60),
-        rgba(255,59,48,0.95),
-        rgba(255,59,48,0.60),
+        rgba(255,59,48,0.45),
+        rgba(255,59,48,1.00),
+        rgba(255,59,48,0.45),
         rgba(255,59,48,0.00)
       );
       box-shadow:
-        0 0 18px rgba(255,59,48,0.45),
-        0 0 40px rgba(255,59,48,0.15);
-      opacity: 0.95;
+        0 0 16px rgba(255,59,48,0.38),
+        0 0 44px rgba(255,59,48,0.16);
+      opacity: 0.98;
+      overflow:hidden;
+    }
+    .glowLine::before{
+      content:"";
+      position:absolute; inset:-10px -40px;
+      background: radial-gradient(closest-side, rgba(255,59,48,0.35), rgba(255,59,48,0.00));
+      filter: blur(6px);
+      opacity: .9;
+    }
+    .glowLine::after{
+      content:"";
+      position:absolute; top:-3px; bottom:-3px;
+      width: 120px;
+      left: -140px;
+      background: linear-gradient(90deg,
+        rgba(255,255,255,0.00),
+        rgba(255,255,255,0.16),
+        rgba(255,255,255,0.00)
+      );
+      filter: blur(2px);
+      animation: shimmer 2.6s ease-in-out infinite;
+      opacity: .65;
+    }
+    @keyframes shimmer{
+      0%{ transform: translateX(0); }
+      60%{ transform: translateX(520px); }
+      100%{ transform: translateX(520px); }
     }
 
     .sub{
@@ -163,7 +187,6 @@
       grid-template-columns: repeat(3, 1fr);
       gap:12px;
     }
-
     .tile{
       background: var(--card2);
       border: 1px solid var(--stroke);
@@ -174,16 +197,15 @@
       padding: 14px 12px 12px;
       text-align:center;
     }
-
     .tIcon{
       width: 26px; height: 26px;
       margin: 0 auto 8px;
       display:block;
       color: var(--red2);
-      filter: drop-shadow(0 0 12px rgba(255,59,48,0.25));
+      filter: drop-shadow(0 0 12px rgba(255,59,48,0.28));
     }
     .tVal{
-      font-size: 26px;
+      font-size: 28px;
       font-weight: 900;
       letter-spacing: -.3px;
     }
@@ -231,7 +253,6 @@
       grid-template-columns: repeat(3, 1fr);
       gap: 12px;
     }
-
     .miniBtn{
       border:none;
       border-radius: 999px;
@@ -247,7 +268,6 @@
       box-shadow: 0 12px 34px rgba(0,0,0,0.6);
     }
     .miniBtn:active{ transform: translateY(1px); }
-
     .bIcon{
       width: 20px; height: 20px;
       color: var(--red2);
@@ -260,6 +280,102 @@
       font-size: 14px;
       color: rgba(255,255,255,0.45);
       text-align:center;
+    }
+
+    /* Maintenance card */
+    .maintCard{
+      padding: 14px 14px 12px;
+    }
+    .maintHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: 10px;
+    }
+    .maintTitle{
+      font-weight: 900;
+      letter-spacing: .3px;
+      font-size: 16px;
+      color: rgba(255,255,255,0.92);
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .badge{
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.25);
+      color: rgba(255,255,255,0.75);
+    }
+    .maintList{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top: 8px;
+    }
+    .maintItem{
+      border: 1px solid rgba(255,255,255,0.10);
+      background: rgba(0,0,0,0.22);
+      border-radius: 16px;
+      padding: 12px;
+      display:flex;
+      gap: 12px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .miLeft{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .miName{
+      font-weight: 900;
+      letter-spacing:.2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .miMeta{
+      font-size: 13px;
+      color: rgba(255,255,255,0.62);
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .miStatus{
+      font-size: 12px;
+      font-weight: 900;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.25);
+      white-space:nowrap;
+    }
+    .sOK{ color: rgba(255,255,255,0.82); }
+    .sSOON{ color: var(--warn); border-color: rgba(255,204,0,0.35); }
+    .sDUE{ color: var(--red2); border-color: rgba(255,59,48,0.35); box-shadow: 0 0 18px rgba(255,59,48,0.12); }
+
+    .miBtns{
+      display:flex;
+      gap:8px;
+      flex: 0 0 auto;
+    }
+    .tinyBtn{
+      border:none;
+      border-radius: 999px;
+      padding: 10px 12px;
+      font-weight: 900;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.10);
+      color:#fff;
+    }
+    .tinyBtn.red{
+      background: linear-gradient(180deg, #ff3b30 0%, #c70f13 100%);
+      border: none;
     }
 
     /* modal */
@@ -323,13 +439,22 @@
       font-size: 13px;
       line-height: 1.35;
     }
+    .twoCol{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    .smallLabel{
+      font-size: 12px;
+      color: rgba(255,255,255,0.55);
+      margin: 4px 0 6px;
+    }
   </style>
 </head>
 
 <body>
   <div class="bgOverlay"></div>
 
-  <!-- splash -->
   <div class="splash" id="splash">
     <img src="./icon.png" alt="N54">
   </div>
@@ -351,7 +476,6 @@
 
       <div class="grid3">
         <div class="tile">
-          <!-- clock icon -->
           <svg class="tIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="9"></circle>
             <path d="M12 7v6l4 2"></path>
@@ -361,7 +485,6 @@
         </div>
 
         <div class="tile">
-          <!-- pin icon -->
           <svg class="tIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 22s7-7 7-12a7 7 0 0 0-14 0c0 5 7 12 7 12z"></path>
             <circle cx="12" cy="10" r="2.5"></circle>
@@ -371,7 +494,6 @@
         </div>
 
         <div class="tile">
-          <!-- gauge icon -->
           <svg class="tIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M5 16a9 9 0 0 1 14 0"></path>
             <path d="M12 13l4-4"></path>
@@ -389,7 +511,6 @@
 
       <div class="row3">
         <button class="miniBtn" id="btnSet">
-          <!-- wrench -->
           <svg class="bIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M14.7 6.3a5 5 0 0 0-6.9 6.9L3 18l3 3 4.8-4.8a5 5 0 0 0 6.9-6.9l-3 3-3-3 3-3z"></path>
           </svg>
@@ -397,7 +518,6 @@
         </button>
 
         <button class="miniBtn" id="btnAddSub">
-          <!-- plus/minus -->
           <svg class="bIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M6 8h12"></path>
             <path d="M6 16h12"></path>
@@ -407,7 +527,6 @@
         </button>
 
         <button class="miniBtn" id="btnClear">
-          <!-- trash -->
           <svg class="bIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 6h18"></path>
             <path d="M8 6V4h8v2"></path>
@@ -419,40 +538,79 @@
         </button>
       </div>
 
+      <!-- ✅ Maintenance reminders -->
+      <div class="card maintCard">
+        <div class="maintHeader">
+          <div class="maintTitle">
+            <span>Maintenance Reminders</span>
+          </div>
+          <span class="badge" id="maintBadge">0 items</span>
+        </div>
+
+        <div class="maintList" id="maintList"></div>
+
+        <div class="mRow" style="margin-top:12px;">
+          <button class="mBtn gray" id="btnAddMaint">Add Reminder</button>
+          <button class="mBtn" id="btnSeedMaint">Quick Add N54 Defaults</button>
+        </div>
+        <div class="hint">Tip: “Mark Done” sets last done = your current engine miles.</div>
+      </div>
+
       <div class="footer">Runs on your device • localStorage • no account</div>
     </div>
   </div>
 
-  <!-- MODALS -->
+  <!-- MODAL -->
   <div class="modalBack" id="modalBack">
     <div class="modal" id="modal">
       <div class="mTitle" id="modalTitle">Set Miles</div>
-      <input id="modalInput" type="number" step="0.1" placeholder="Enter miles (e.g. 96100)" inputmode="decimal">
+
+      <div id="modalBodySingle">
+        <input id="modalInput" type="number" step="0.1" placeholder="Enter miles (e.g. 96100)" inputmode="decimal">
+      </div>
+
+      <div id="modalBodyMaint" style="display:none;">
+        <div class="smallLabel">Reminder name</div>
+        <input id="mName" type="text" placeholder="Oil Change">
+        <div class="twoCol" style="margin-top:10px;">
+          <div>
+            <div class="smallLabel">Interval (miles)</div>
+            <input id="mInterval" type="number" step="1" placeholder="5000">
+          </div>
+          <div>
+            <div class="smallLabel">Last done at (miles)</div>
+            <input id="mLast" type="number" step="1" placeholder="Use current miles">
+          </div>
+        </div>
+      </div>
+
       <div class="mRow">
         <button class="mBtn gray" id="modalCancel">Cancel</button>
         <button class="mBtn" id="modalOk">Save</button>
       </div>
+
       <div class="hint" id="modalHint"></div>
     </div>
   </div>
 
   <script>
     // ---- storage keys ----
-    const KEY = "n54_miles_v2";
+    const KEY = "n54_miles_v3";
+    const MAINT_KEY = "n54_maint_v1";
 
-    function loadState(){
+    function loadJSON(key){
       try{
-        const raw = localStorage.getItem(KEY);
+        const raw = localStorage.getItem(key);
         if(!raw) return null;
         return JSON.parse(raw);
       }catch(e){ return null; }
     }
-    function saveState(s){
-      localStorage.setItem(KEY, JSON.stringify(s));
+    function saveJSON(key, obj){
+      localStorage.setItem(key, JSON.stringify(obj));
     }
 
     // ---- state ----
-    let state = loadState() || {
+    let state = loadJSON(KEY) || {
       engineMiles: 0.0,
       totalTracked: 0.0,
       totalRuntimeSec: 0,
@@ -461,8 +619,9 @@
       tracking: false,
       lastLat: null,
       lastLon: null,
-      lastGoodTime: null,
     };
+
+    let maint = loadJSON(MAINT_KEY) || [];
 
     // ---- elements ----
     const elEngine = document.getElementById("engineMiles");
@@ -473,16 +632,27 @@
     const btnStart = document.getElementById("btnStart");
     const btnStartText = document.getElementById("btnStartText");
 
+    const maintList = document.getElementById("maintList");
+    const maintBadge = document.getElementById("maintBadge");
+
     // modal
     const modalBack = document.getElementById("modalBack");
     const modalTitle = document.getElementById("modalTitle");
-    const modalInput = document.getElementById("modalInput");
     const modalHint = document.getElementById("modalHint");
     const modalCancel = document.getElementById("modalCancel");
     const modalOk = document.getElementById("modalOk");
 
+    const modalBodySingle = document.getElementById("modalBodySingle");
+    const modalInput = document.getElementById("modalInput");
+
+    const modalBodyMaint = document.getElementById("modalBodyMaint");
+    const mName = document.getElementById("mName");
+    const mInterval = document.getElementById("mInterval");
+    const mLast = document.getElementById("mLast");
+
     // ---- helpers ----
     const fmt1 = (n)=> (Math.round((n + Number.EPSILON)*10)/10).toFixed(1);
+    const fmt0 = (n)=> String(Math.round(n));
     const pad2 = (n)=> String(n).padStart(2,"0");
     function secToHMS(sec){
       sec = Math.max(0, Math.floor(sec));
@@ -492,7 +662,7 @@
       return `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
     }
 
-    // simple iOS haptic (works only if allowed)
+    // iOS haptic (basic)
     function haptic(type="light"){
       try{
         if(navigator.vibrate){
@@ -501,6 +671,105 @@
       }catch(e){}
     }
 
+    function saveAll(){
+      saveJSON(KEY, state);
+      saveJSON(MAINT_KEY, maint);
+    }
+
+    // ---- Maintenance logic ----
+    function maintStatus(item){
+      const nextDue = (item.lastDone || 0) + (item.interval || 0);
+      const remaining = nextDue - state.engineMiles;
+
+      // choose window for "due soon"
+      const SOON_WINDOW = 350; // miles
+
+      if(state.engineMiles >= nextDue) return { label:"DUE", cls:"sDUE", nextDue, remaining };
+      if(remaining <= SOON_WINDOW) return { label:"DUE SOON", cls:"sSOON", nextDue, remaining };
+      return { label:"OK", cls:"sOK", nextDue, remaining };
+    }
+
+    function renderMaint(){
+      maintBadge.textContent = `${maint.length} item${maint.length===1 ? "" : "s"}`;
+
+      if(maint.length === 0){
+        maintList.innerHTML = `
+          <div class="hint" style="margin-top:2px;">
+            No reminders yet. Tap “Quick Add N54 Defaults” or “Add Reminder”.
+          </div>
+        `;
+        return;
+      }
+
+      // sort by most urgent (lowest remaining)
+      const sorted = [...maint].sort((a,b)=>{
+        const ra = maintStatus(a).remaining;
+        const rb = maintStatus(b).remaining;
+        return ra - rb;
+      });
+
+      maintList.innerHTML = sorted.map((it)=>{
+        const s = maintStatus(it);
+        const next = s.nextDue;
+        const left = s.remaining;
+
+        const leftText = (left >= 0)
+          ? `${fmt0(left)} mi left`
+          : `${fmt0(Math.abs(left))} mi overdue`;
+
+        return `
+          <div class="maintItem">
+            <div class="miLeft">
+              <div class="miName">${escapeHTML(it.name || "Reminder")}</div>
+              <div class="miMeta">
+                <span>Interval: ${fmt0(it.interval || 0)} mi</span>
+                <span>Last: ${fmt0(it.lastDone || 0)}</span>
+                <span>Next: ${fmt0(next)}</span>
+                <span>${leftText}</span>
+              </div>
+            </div>
+            <div class="miBtns">
+              <span class="miStatus ${s.cls}">${s.label}</span>
+              <button class="tinyBtn red" data-done="${it.id}">Mark Done</button>
+              <button class="tinyBtn" data-del="${it.id}">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      // wire buttons
+      maintList.querySelectorAll("[data-done]").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const id = btn.getAttribute("data-done");
+          const item = maint.find(x=> x.id === id);
+          if(!item) return;
+          item.lastDone = Math.round(state.engineMiles);
+          saveAll();
+          haptic("light");
+          renderMaint();
+        });
+      });
+
+      maintList.querySelectorAll("[data-del]").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const id = btn.getAttribute("data-del");
+          const ok = confirm("Delete this reminder?");
+          if(!ok) return;
+          maint = maint.filter(x=> x.id !== id);
+          saveAll();
+          haptic("light");
+          renderMaint();
+        });
+      });
+    }
+
+    function escapeHTML(str){
+      return String(str).replace(/[&<>"']/g, (m)=>({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      }[m]));
+    }
+
+    // ---- main render ----
     function render(){
       elEngine.textContent = fmt1(state.engineMiles);
       elTrip.textContent = fmt1(state.tripMiles);
@@ -510,6 +779,8 @@
 
       btnStartText.textContent = state.tracking ? "STOP TRACKING" : "START TRACKING";
       btnStart.classList.toggle("secondary", state.tracking);
+
+      renderMaint();
     }
 
     // ---- GPS tracking ----
@@ -533,7 +804,7 @@
       if(runtimeTimer) return;
       runtimeTimer = setInterval(()=>{
         state.totalRuntimeSec += 1;
-        saveState(state);
+        saveJSON(KEY, state);
         render();
       }, 1000);
     }
@@ -556,7 +827,7 @@
       state.lastLat = null;
       state.lastLon = null;
 
-      saveState(state);
+      saveJSON(KEY, state);
       render();
       haptic("light");
 
@@ -566,15 +837,13 @@
         (pos)=>{
           const { latitude, longitude, accuracy } = pos.coords;
 
-          // basic accuracy filter (ignore bad points)
-          if(typeof accuracy === "number" && accuracy > 80){
-            return;
-          }
+          // ignore bad points
+          if(typeof accuracy === "number" && accuracy > 80) return;
 
           if(state.lastLat == null){
             state.lastLat = latitude;
             state.lastLon = longitude;
-            saveState(state);
+            saveJSON(KEY, state);
             return;
           }
 
@@ -584,7 +853,7 @@
           if(d < 0.01 || d > 1.5){
             state.lastLat = latitude;
             state.lastLon = longitude;
-            saveState(state);
+            saveJSON(KEY, state);
             return;
           }
 
@@ -596,26 +865,21 @@
           state.sessionMiles += d;
           state.tripMiles += d;
 
-          saveState(state);
+          saveJSON(KEY, state);
           render();
         },
         (err)=>{
-          // if permission denied or error, stop tracking
           console.log(err);
           stopTracking();
           alert("GPS error. Make sure Location is allowed for Safari.");
         },
-        {
-          enableHighAccuracy: true,
-          maximumAge: 800,
-          timeout: 15000
-        }
+        { enableHighAccuracy:true, maximumAge:800, timeout:15000 }
       );
     }
 
     function stopTracking(){
       state.tracking = false;
-      saveState(state);
+      saveJSON(KEY, state);
       render();
       haptic("heavy");
 
@@ -626,25 +890,38 @@
       stopRuntime();
     }
 
-    // ---- modal control ----
-    let modalMode = "set"; // "set" | "addsub"
+    // ---- Modal control ----
+    let modalMode = "set"; // "set" | "addsub" | "addmaint"
     function openModal(mode){
       modalMode = mode;
-      modalInput.value = "";
       modalHint.textContent = "";
+
+      // show/hide bodies
+      modalBodySingle.style.display = (mode === "set" || mode === "addsub") ? "block" : "none";
+      modalBodyMaint.style.display = (mode === "addmaint") ? "block" : "none";
 
       if(mode === "set"){
         modalTitle.textContent = "Set Current Engine Miles";
+        modalInput.value = "";
         modalInput.placeholder = "Example: 96100";
         modalHint.textContent = "Sets the odometer value stored in the app.";
-      } else {
+        setTimeout(()=> modalInput.focus(), 50);
+      } else if(mode === "addsub"){
         modalTitle.textContent = "Add / Subtract Miles";
+        modalInput.value = "";
         modalInput.placeholder = "Example: +100 or -25";
         modalHint.textContent = "Use a negative number to subtract.";
+        setTimeout(()=> modalInput.focus(), 50);
+      } else {
+        modalTitle.textContent = "Add Maintenance Reminder";
+        mName.value = "";
+        mInterval.value = "";
+        mLast.value = "";
+        modalHint.textContent = "Leave “Last done” blank to use your current engine miles.";
+        setTimeout(()=> mName.focus(), 50);
       }
 
       modalBack.classList.add("show");
-      setTimeout(()=> modalInput.focus(), 50);
     }
 
     function closeModal(){
@@ -657,31 +934,68 @@
     });
 
     modalOk.addEventListener("click", ()=>{
-      const val = parseFloat(modalInput.value);
-      if(Number.isNaN(val)){
-        modalHint.textContent = "Enter a valid number.";
+      if(modalMode === "set" || modalMode === "addsub"){
+        const val = parseFloat(modalInput.value);
+        if(Number.isNaN(val)){
+          modalHint.textContent = "Enter a valid number.";
+          return;
+        }
+        if(modalMode === "set"){
+          state.engineMiles = Math.max(0, val);
+        } else {
+          state.engineMiles = Math.max(0, state.engineMiles + val);
+        }
+        saveJSON(KEY, state);
+        render();
+        haptic("light");
+        closeModal();
         return;
       }
 
-      if(modalMode === "set"){
-        state.engineMiles = Math.max(0, val);
-      } else {
-        state.engineMiles = Math.max(0, state.engineMiles + val);
+      // add maintenance
+      const name = (mName.value || "").trim();
+      const interval = parseFloat(mInterval.value);
+      const lastRaw = (mLast.value || "").trim();
+
+      if(!name){
+        modalHint.textContent = "Add a reminder name.";
+        return;
+      }
+      if(Number.isNaN(interval) || interval <= 0){
+        modalHint.textContent = "Interval must be a number (miles).";
+        return;
       }
 
-      saveState(state);
+      let lastDone = Math.round(state.engineMiles);
+      if(lastRaw.length){
+        const parsedLast = parseFloat(lastRaw);
+        if(Number.isNaN(parsedLast) || parsedLast < 0){
+          modalHint.textContent = "Last done must be a valid mileage.";
+          return;
+        }
+        lastDone = Math.round(parsedLast);
+      }
+
+      maint.push({
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2),
+        name,
+        interval: Math.round(interval),
+        lastDone
+      });
+
+      saveJSON(MAINT_KEY, maint);
       render();
       haptic("light");
       closeModal();
     });
 
-    // ---- buttons ----
+    // ---- Buttons ----
     document.getElementById("btnSet").addEventListener("click", ()=>{ haptic("light"); openModal("set"); });
     document.getElementById("btnAddSub").addEventListener("click", ()=>{ haptic("light"); openModal("addsub"); });
 
     document.getElementById("btnClear").addEventListener("click", ()=>{
       haptic("heavy");
-      const ok = confirm("Clear all saved data? This resets miles, runtime, and totals.");
+      const ok = confirm("Clear ALL saved data? This resets miles, runtime, totals, and maintenance.");
       if(!ok) return;
 
       stopTracking();
@@ -694,15 +1008,52 @@
         tracking: false,
         lastLat: null,
         lastLon: null,
-        lastGoodTime: null,
       };
-      saveState(state);
+      maint = [];
+      saveAll();
       render();
     });
 
     btnStart.addEventListener("click", ()=>{
       if(state.tracking) stopTracking();
       else startTracking();
+    });
+
+    // Maintenance buttons
+    document.getElementById("btnAddMaint").addEventListener("click", ()=>{
+      haptic("light");
+      openModal("addmaint");
+    });
+
+    document.getElementById("btnSeedMaint").addEventListener("click", ()=>{
+      haptic("light");
+      const ok = confirm("Add common N54 reminders (you can delete/edit later)?");
+      if(!ok) return;
+
+      const current = Math.round(state.engineMiles);
+
+      const defaults = [
+        { name:"Oil Change", interval: 5000, lastDone: current },
+        { name:"Spark Plugs", interval: 15000, lastDone: current },
+        { name:"Ignition Coils", interval: 30000, lastDone: current },
+        { name:"Air Filter", interval: 12000, lastDone: current },
+        { name:"Brake Fluid", interval: 24000, lastDone: current },
+        { name:"Coolant Flush", interval: 30000, lastDone: current },
+        { name:"Walnut Blast (Intake)", interval: 40000, lastDone: current },
+      ];
+
+      // only add if not already present by name
+      const names = new Set(maint.map(x => (x.name||"").toLowerCase()));
+      defaults.forEach(d=>{
+        if(names.has(d.name.toLowerCase())) return;
+        maint.push({
+          id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2),
+          ...d
+        });
+      });
+
+      saveJSON(MAINT_KEY, maint);
+      render();
     });
 
     // ---- splash hide ----
