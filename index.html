@@ -1,230 +1,927 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 
-<title>N54 Engine Miles</title>
+  <title>N54 Mileage Tracker</title>
 
-<!-- iOS PWA -->
-<link rel="apple-touch-icon" href="icon.png">
-<link rel="icon" href="icon.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- iOS PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
-<style>
-:root {
-  --red: #e53935;
-  --card: rgba(255,255,255,0.06);
-  --blur: blur(14px);
-}
+  <!-- Icons -->
+  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="icon" type="image/png" href="icon.png">
 
-* { box-sizing: border-box; }
+  <style>
+    :root{
+      --bg0:#040506;
+      --bg1:#0b0d10;
+      --card: rgba(20,22,26,.55);
+      --card2: rgba(18,20,24,.45);
+      --stroke: rgba(255,255,255,.08);
+      --txt:#f4f6fb;
+      --muted: rgba(244,246,251,.55);
+      --red:#ff2a2a;
+      --red2:#b70000;
+      --shadow: 0 18px 55px rgba(0,0,0,.55);
+      --radius: 26px;
+    }
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, system-ui;
-  color: #fff;
-  background:
-    radial-gradient(circle at top, #1a1a1a, #000),
-    repeating-linear-gradient(
-      135deg,
-      rgba(255,255,255,0.03) 0px,
-      rgba(255,255,255,0.03) 2px,
-      transparent 2px,
-      transparent 6px
-    );
-}
+    *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      color:var(--txt);
+      background: radial-gradient(1200px 900px at 20% 10%, rgba(255,40,40,.10), transparent 55%),
+                  radial-gradient(900px 700px at 80% 25%, rgba(255,40,40,.07), transparent 60%),
+                  linear-gradient(145deg, var(--bg0), var(--bg1));
+      overflow-x:hidden;
+    }
 
-.wrap {
-  max-width: 420px;
-  margin: auto;
-  padding: 20px;
-}
+    /* subtle diagonal texture (lighter than full carbon) */
+    .texture{
+      position:fixed; inset:0;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.05) 0%, rgba(255,255,255,0) 40%),
+        repeating-linear-gradient(135deg,
+          rgba(255,255,255,.06) 0px,
+          rgba(255,255,255,.06) 10px,
+          rgba(255,255,255,0) 10px,
+          rgba(255,255,255,0) 26px
+        );
+      opacity:.18;
+      pointer-events:none;
+      z-index:0;
+    }
 
-.card {
-  background: var(--card);
-  backdrop-filter: var(--blur);
-  border-radius: 22px;
-  padding: 18px;
-  margin-bottom: 14px;
-  box-shadow: inset 0 0 30px rgba(0,0,0,.6);
-}
+    .wrap{
+      position:relative;
+      z-index:1;
+      max-width: 540px;
+      margin:0 auto;
+      padding: 18px 16px calc(28px + env(safe-area-inset-bottom));
+    }
 
-.hero {
-  width: 240px;
-  height: 240px;
-  margin: 10px auto 18px;
-  border-radius: 24px;
-  overflow: hidden;
-  box-shadow: 0 20px 40px rgba(0,0,0,.7);
-  position: relative;
-}
+    /* Splash (cannot block taps after hidden) */
+    .splash{
+      position:fixed; inset:0;
+      display:grid; place-items:center;
+      background:#000;
+      z-index:9999;
+      transition: opacity .35s ease;
+    }
+    .splash.hidden{
+      opacity:0;
+      pointer-events:none; /* IMPORTANT */
+    }
+    .splash img{
+      width:min(180px, 45vw);
+      border-radius:24px;
+      box-shadow: 0 22px 70px rgba(255,40,40,.16);
+      opacity:.95;
+      transform: translateZ(0);
+    }
 
-.hero img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
+    .hero{
+      display:grid;
+      place-items:center;
+      margin-top: 8px;
+      margin-bottom: 14px;
+    }
+    .heroImg{
+      width: min(360px, 86vw);
+      aspect-ratio: 1 / 1;
+      border-radius: 34px;
+      object-fit: cover;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(255,255,255,.08);
+      cursor:pointer;
+      user-select:none;
+    }
+    .hint{
+      margin-top:10px;
+      font-size:12px;
+      color: rgba(244,246,251,.45);
+      text-align:center;
+    }
 
-.heroHint {
-  position: absolute;
-  bottom: 10px;
-  right: 12px;
-  font-size: 12px;
-  opacity: .6;
-}
+    .card{
+      background: var(--card);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
 
-.center { text-align: center; }
+    .mainCard{
+      padding: 18px 18px 16px;
+      text-align:center;
+      margin-bottom: 16px;
+    }
 
-.big {
-  font-size: 52px;
-  font-weight: 800;
-}
+    .label{
+      font-size: 16px;
+      color: rgba(244,246,251,.70);
+      letter-spacing:.3px;
+      margin-bottom: 6px;
+    }
 
-.sub { opacity: .6; }
+    .bigMiles{
+      font-size: 76px;
+      font-weight: 800;
+      line-height: 1;
+      margin: 2px 0 2px;
+      text-shadow: 0 14px 45px rgba(0,0,0,.6);
+    }
+    .unit{
+      font-size: 18px;
+      color: rgba(244,246,251,.55);
+      margin-bottom: 10px;
+    }
 
-.fadeLine {
-  height: 3px;
-  background: linear-gradient(90deg, transparent, var(--red), transparent);
-  margin: 12px 0;
-}
+    /* red glow line (fade out) */
+    .glowLine{
+      height: 6px;
+      margin: 14px 8px 12px;
+      border-radius: 99px;
+      background:
+        radial-gradient(closest-side, rgba(255,40,40,.0), rgba(255,40,40,.0)),
+        linear-gradient(to right,
+          rgba(255,40,40,0) 0%,
+          rgba(255,40,40,.92) 22%,
+          rgba(255,40,40,.92) 78%,
+          rgba(255,40,40,0) 100%
+        );
+      box-shadow:
+        0 0 26px rgba(255,40,40,.32),
+        0 0 55px rgba(255,40,40,.18);
+      opacity:.9;
+    }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(3,1fr);
-  gap: 12px;
-}
+    .sub{
+      font-size: 16px;
+      color: rgba(244,246,251,.62);
+      margin-top: 2px;
+    }
+    .sub strong{ color: rgba(244,246,251,.9); }
 
-.tile {
-  text-align: center;
-}
+    .grid3{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .tile{
+      padding: 14px 12px 14px;
+      text-align:center;
+      background: var(--card2);
+      border: 1px solid var(--stroke);
+      border-radius: 22px;
+      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    .tIcon{
+      font-size: 22px;
+      display:inline-block;
+      margin-bottom: 6px;
+      color: var(--red);
+      filter: drop-shadow(0 0 10px rgba(255,40,40,.25));
+    }
+    .tVal{
+      font-size: 36px;
+      font-weight: 850;
+      line-height:1.05;
+      margin-bottom: 4px;
+    }
+    .tValSmall{
+      font-size: 30px;
+      font-weight: 850;
+      line-height:1.05;
+      margin-bottom: 4px;
+    }
+    .tUnit{
+      font-size: 16px;
+      color: rgba(244,246,251,.45);
+      letter-spacing:.2px;
+      text-transform: lowercase;
+    }
 
-.icon {
-  font-size: 22px;
-  color: var(--red);
-}
+    .btnMain{
+      width:100%;
+      border:0;
+      padding: 18px 18px;
+      border-radius: 999px;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing:.6px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--red2), var(--red));
+      box-shadow: 0 18px 60px rgba(255,40,40,.22), 0 18px 55px rgba(0,0,0,.55);
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:12px;
+      margin-bottom: 14px;
+    }
+    .btnMain:active{ transform: translateY(1px); }
 
-.start {
-  background: linear-gradient(180deg, #ff5252, #c62828);
-  border: none;
-  width: 100%;
-  padding: 16px;
-  font-size: 18px;
-  color: #fff;
-  border-radius: 30px;
-  margin: 18px 0;
-}
+    .btnRow{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .btnChip{
+      border: 1px solid rgba(255,255,255,.09);
+      background: rgba(20,22,26,.45);
+      color: rgba(244,246,251,.95);
+      border-radius: 999px;
+      padding: 12px 10px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      box-shadow: 0 14px 40px rgba(0,0,0,.4);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      user-select:none;
+    }
+    .btnChip:active{ transform: translateY(1px); }
+    .chipIcon{
+      color: var(--red);
+      filter: drop-shadow(0 0 10px rgba(255,40,40,.20));
+      font-size: 18px;
+      line-height:1;
+    }
 
-.actions {
-  display: grid;
-  grid-template-columns: repeat(3,1fr);
-  gap: 10px;
-}
+    .footer{
+      text-align:center;
+      color: rgba(244,246,251,.45);
+      font-size: 14px;
+      margin-top: 6px;
+      margin-bottom: 10px;
+    }
 
-.action {
-  background: var(--card);
-  padding: 12px;
-  border-radius: 18px;
-  text-align: center;
-  font-size: 14px;
-}
+    /* Maintenance */
+    .maint{
+      margin-top: 14px;
+      padding: 16px;
+    }
+    .maintTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom: 10px;
+    }
+    .maintTitle{
+      font-size: 22px;
+      font-weight: 900;
+      margin:0;
+    }
+    .pill{
+      border:1px solid rgba(255,255,255,.12);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      color: rgba(244,246,251,.7);
+      background: rgba(0,0,0,.18);
+    }
+    .maintHint{
+      color: rgba(244,246,251,.55);
+      font-size: 14px;
+      margin: 6px 0 14px;
+      line-height:1.35;
+    }
+    .maintBtns{
+      display:flex;
+      gap: 12px;
+      flex-wrap:wrap;
+      margin-bottom: 12px;
+    }
+    .btnSmall{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(20,22,26,.45);
+      color:#fff;
+      border-radius: 14px;
+      padding: 12px 14px;
+      font-weight: 850;
+      cursor:pointer;
+      box-shadow: 0 14px 40px rgba(0,0,0,.4);
+    }
+    .btnSmall.red{
+      background: linear-gradient(135deg, var(--red2), var(--red));
+      border:0;
+    }
+    .maintList{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top: 6px;
+    }
+    .rem{
+      padding: 12px 12px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.08);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .remLeft{
+      min-width:0;
+    }
+    .remName{
+      font-weight: 900;
+      font-size: 16px;
+      margin:0 0 4px;
+    }
+    .remMeta{
+      font-size: 13px;
+      color: rgba(244,246,251,.55);
+      line-height:1.25;
+    }
+    .dueSoon{ color: rgba(255,210,0,.95); }
+    .dueNow{ color: rgba(255,40,40,.95); }
+    .ok{ color: rgba(90,255,170,.9); }
+    .remActions{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      flex-shrink:0;
+    }
+    .mini{
+      padding: 8px 10px;
+      border-radius: 12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(20,22,26,.40);
+      color:#fff;
+      font-weight: 850;
+      cursor:pointer;
+      font-size: 13px;
+      white-space:nowrap;
+    }
+    .mini.red{
+      background: rgba(255,40,40,.16);
+      border:1px solid rgba(255,40,40,.35);
+    }
 
-.reminders button {
-  margin-top: 10px;
-  width: 100%;
-  padding: 12px;
-  border-radius: 20px;
-  border: none;
-  background: var(--red);
-  color: #fff;
-}
+    /* hidden file picker */
+    #photoPicker{ display:none; }
 
-.footer {
-  text-align: center;
-  opacity: .4;
-  font-size: 12px;
-  margin-top: 10px;
-}
-</style>
+    /* Make sure all taps work */
+    button{ touch-action: manipulation; }
+  </style>
 </head>
 
 <body>
-<div class="wrap">
+  <div class="texture"></div>
 
-<!-- HEADER IMAGE -->
-<div class="hero" onclick="pickHero()">
-  <img id="heroImg" src="icon.png">
-  <div class="heroHint">Tap to change</div>
-</div>
-<input id="heroPicker" type="file" accept="image/*" hidden>
-
-<!-- ENGINE MILES -->
-<div class="card center">
-  <div class="sub">Current Engine Miles</div>
-  <div class="big" id="engineMiles">0.0</div>
-  <div class="sub">miles</div>
-  <div class="fadeLine"></div>
-  <div class="sub">Trip Miles: <span id="tripMiles">0.0</span></div>
-</div>
-
-<!-- STATS -->
-<div class="grid">
-  <div class="card tile">
-    <div class="icon">⏱</div>
-    <div id="runtime">00:00:00</div>
-    <div class="sub">runtime</div>
+  <!-- splash -->
+  <div class="splash" id="splash">
+    <img src="icon.png" alt="N54">
   </div>
-  <div class="card tile">
-    <div class="icon">📍</div>
-    <div id="tracked">0.0</div>
-    <div class="sub">tracked</div>
+
+  <div class="wrap">
+    <div class="hero">
+      <img class="heroImg" id="heroImg" src="icon.png" alt="Tap to change photo" />
+      <div class="hint">Tap image to change (saved on this phone)</div>
+      <input id="photoPicker" type="file" accept="image/*" />
+    </div>
+
+    <div class="card mainCard">
+      <div class="label">Current Engine Miles</div>
+      <div class="bigMiles" id="engineMiles">0.0</div>
+      <div class="unit">miles</div>
+
+      <div class="glowLine"></div>
+
+      <div class="sub">Trip Miles: <strong id="tripMiles">0.0</strong></div>
+    </div>
+
+    <div class="grid3">
+      <div class="tile">
+        <div class="tIcon">🕒</div>
+        <div class="tVal" id="totalRuntime">00:00:00</div>
+        <div class="tUnit">runtime</div>
+      </div>
+
+      <div class="tile">
+        <div class="tIcon">📍</div>
+        <div class="tValSmall"><span id="totalTracked">0.0</span></div>
+        <div class="tUnit">tracked</div>
+      </div>
+
+      <div class="tile">
+        <div class="tIcon">🏁</div>
+        <div class="tValSmall"><span id="sessionMiles">0.0</span></div>
+        <div class="tUnit">session</div>
+      </div>
+    </div>
+
+    <button class="btnMain" id="btnStart">
+      <span style="font-size:18px;">▶</span>
+      <span id="startLabel">START TRACKING</span>
+    </button>
+
+    <div class="btnRow">
+      <button class="btnChip" id="btnAdjust"><span class="chipIcon">📌</span><span>Adjust</span></button>
+      <button class="btnChip" id="btnAddSub"><span class="chipIcon">➕➖</span><span>Add/Sub</span></button>
+      <button class="btnChip" id="btnClear"><span class="chipIcon">🗑️</span><span>Clear</span></button>
+    </div>
+
+    <div class="footer">Runs on your device • localStorage • no account</div>
+
+    <div class="card maint" id="maintCard">
+      <div class="maintTop">
+        <h3 class="maintTitle">Maintenance Reminders</h3>
+        <div class="pill"><span id="remCount">0</span> items</div>
+      </div>
+
+      <div class="maintHint">
+        No reminders yet. Tap <b>Quick Add N54 Defaults</b> or <b>Add Reminder</b>.
+        <div style="margin-top:6px; opacity:.9;">
+          Tip: <b>Mark Done</b> sets “last done” = your current engine miles.
+        </div>
+      </div>
+
+      <div class="maintBtns">
+        <button class="btnSmall" id="btnAddReminder">Add Reminder</button>
+        <button class="btnSmall red" id="btnQuickDefaults">Quick Add N54 Defaults</button>
+      </div>
+
+      <div class="maintList" id="remList"></div>
+    </div>
   </div>
-  <div class="card tile">
-    <div class="icon">🏁</div>
-    <div id="session">0.0</div>
-    <div class="sub">session</div>
-  </div>
-</div>
 
-<button class="start">▶ START TRACKING</button>
+  <script>
+    (() => {
+      // ---------- storage ----------
+      const KEY = "n54_mileage_app_v3";
+      const HERO_KEY = "n54_mileage_hero_v1";
 
-<!-- ACTIONS -->
-<div class="actions">
-  <div class="action">🔧 Adjust</div>
-  <div class="action">➕➖ Add/Sub</div>
-  <div class="action">🗑 Clear</div>
-</div>
+      const defaultState = {
+        engineMiles: 0,
+        tripMiles: 0,
+        totalTracked: 0,
+        totalRuntimeSec: 0,
 
-<!-- MAINTENANCE -->
-<div class="card reminders">
-  <strong>Maintenance Reminders</strong>
-  <div class="sub">No reminders yet</div>
-  <button>Add Reminder</button>
-</div>
+        tracking: false,
+        watchId: null,
+        lastLat: null,
+        lastLon: null,
+        lastTimeMs: null,
+        sessionMiles: 0,
 
-<div class="footer">Runs on your device · localStorage · no account</div>
-</div>
+        reminders: []
+      };
 
-<script>
-function pickHero(){
-  document.getElementById('heroPicker').click();
-}
+      function load(){
+        try{
+          const raw = localStorage.getItem(KEY);
+          if(!raw) return structuredClone(defaultState);
+          const obj = JSON.parse(raw);
+          return { ...structuredClone(defaultState), ...obj };
+        }catch(e){
+          return structuredClone(defaultState);
+        }
+      }
+      function save(){
+        localStorage.setItem(KEY, JSON.stringify(state));
+      }
 
-heroPicker.onchange = e => {
-  const f = e.target.files[0];
-  if(!f) return;
-  const r = new FileReader();
-  r.onload = () => {
-    localStorage.setItem('hero', r.result);
-    heroImg.src = r.result;
-  };
-  r.readAsDataURL(f);
-};
+      let state = load();
 
-const saved = localStorage.getItem('hero');
-if(saved) heroImg.src = saved;
-</script>
+      // ---------- elements ----------
+      const elMiles = document.getElementById("engineMiles");
+      const elTrip = document.getElementById("tripMiles");
+      const elRuntime = document.getElementById("totalRuntime");
+      const elTotalTracked = document.getElementById("totalTracked");
+      const elSession = document.getElementById("sessionMiles");
+      const btnStart = document.getElementById("btnStart");
+      const startLabel = document.getElementById("startLabel");
+      const btnAdjust = document.getElementById("btnAdjust");
+      const btnAddSub = document.getElementById("btnAddSub");
+      const btnClear = document.getElementById("btnClear");
 
+      const splash = document.getElementById("splash");
+
+      const heroImg = document.getElementById("heroImg");
+      const photoPicker = document.getElementById("photoPicker");
+
+      const btnAddReminder = document.getElementById("btnAddReminder");
+      const btnQuickDefaults = document.getElementById("btnQuickDefaults");
+      const remList = document.getElementById("remList");
+      const remCount = document.getElementById("remCount");
+
+      // ---------- helpers ----------
+      function haptic(ms=18){
+        try{
+          if(navigator.vibrate) navigator.vibrate(ms);
+        }catch(e){}
+      }
+
+      function fmtMiles(x){
+        const n = Number(x) || 0;
+        return n.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+      }
+
+      function fmtSmallMiles(x){
+        const n = Number(x) || 0;
+        return n.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 });
+      }
+
+      function fmtTime(sec){
+        sec = Math.max(0, Math.floor(sec || 0));
+        const h = String(Math.floor(sec/3600)).padStart(2,"0");
+        const m = String(Math.floor((sec%3600)/60)).padStart(2,"0");
+        const s = String(sec%60).padStart(2,"0");
+        return `${h}:${m}:${s}`;
+      }
+
+      function haversineMiles(lat1, lon1, lat2, lon2){
+        const R = 3958.7613; // miles
+        const toRad = d => d * Math.PI / 180;
+        const dLat = toRad(lat2-lat1);
+        const dLon = toRad(lon2-lon1);
+        const a = Math.sin(dLat/2)**2 +
+                  Math.cos(toRad(lat1))*Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
+        return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
+      }
+
+      function render(){
+        elMiles.textContent = fmtMiles(state.engineMiles);
+        elTrip.textContent = fmtSmallMiles(state.tripMiles);
+        elRuntime.textContent = fmtTime(state.totalRuntimeSec);
+        elTotalTracked.textContent = fmtSmallMiles(state.totalTracked);
+        elSession.textContent = fmtSmallMiles(state.sessionMiles);
+
+        startLabel.textContent = state.tracking ? "STOP TRACKING" : "START TRACKING";
+
+        renderReminders();
+      }
+
+      // ---------- hero photo ----------
+      function loadHero(){
+        const saved = localStorage.getItem(HERO_KEY);
+        if(saved) heroImg.src = saved;
+        else heroImg.src = "icon.png";
+      }
+
+      heroImg.addEventListener("click", () => {
+        haptic(12);
+        photoPicker.click();
+      });
+
+      photoPicker.addEventListener("change", async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = reader.result;
+          try{
+            localStorage.setItem(HERO_KEY, dataUrl);
+            heroImg.src = dataUrl;
+            haptic(18);
+          }catch(err){
+            alert("Image too large to save. Try a smaller image.");
+          }
+        };
+        reader.readAsDataURL(file);
+      });
+
+      // ---------- tracking ----------
+      let runtimeTimer = null;
+
+      function startRuntimeTimer(){
+        stopRuntimeTimer();
+        runtimeTimer = setInterval(() => {
+          if(!state.tracking) return;
+          state.totalRuntimeSec += 1;
+          save();
+          elRuntime.textContent = fmtTime(state.totalRuntimeSec);
+        }, 1000);
+      }
+      function stopRuntimeTimer(){
+        if(runtimeTimer){ clearInterval(runtimeTimer); runtimeTimer = null; }
+      }
+
+      function startTracking(){
+        if(!navigator.geolocation){
+          alert("GPS not supported on this device.");
+          return;
+        }
+
+        state.tracking = true;
+        state.tripMiles = 0;
+        state.sessionMiles = 0;
+        state.lastLat = null;
+        state.lastLon = null;
+        state.lastTimeMs = null;
+
+        save();
+        render();
+
+        startRuntimeTimer();
+
+        state.watchId = navigator.geolocation.watchPosition(
+          (pos) => {
+            const lat = pos.coords.latitude;
+            const lon = pos.coords.longitude;
+
+            if(state.lastLat == null || state.lastLon == null){
+              state.lastLat = lat;
+              state.lastLon = lon;
+              state.lastTimeMs = Date.now();
+              save();
+              return;
+            }
+
+            const d = haversineMiles(state.lastLat, state.lastLon, lat, lon);
+
+            // reject crazy jumps (GPS spikes)
+            if(d < 0.001 || d > 1.5){
+              state.lastLat = lat;
+              state.lastLon = lon;
+              state.lastTimeMs = Date.now();
+              save();
+              return;
+            }
+
+            state.tripMiles += d;
+            state.sessionMiles += d;
+            state.totalTracked += d;
+            state.engineMiles += d;
+
+            state.lastLat = lat;
+            state.lastLon = lon;
+            state.lastTimeMs = Date.now();
+
+            save();
+
+            // update UI fast
+            elTrip.textContent = fmtSmallMiles(state.tripMiles);
+            elSession.textContent = fmtSmallMiles(state.sessionMiles);
+            elTotalTracked.textContent = fmtSmallMiles(state.totalTracked);
+            elMiles.textContent = fmtMiles(state.engineMiles);
+          },
+          (err) => {
+            alert("GPS error: " + err.message + "\n\nMake sure Location is allowed for Safari.");
+            stopTracking();
+          },
+          {
+            enableHighAccuracy: true,
+            maximumAge: 1000,
+            timeout: 15000
+          }
+        );
+
+        save();
+      }
+
+      function stopTracking(){
+        state.tracking = false;
+
+        if(state.watchId != null){
+          try{ navigator.geolocation.clearWatch(state.watchId); }catch(e){}
+          state.watchId = null;
+        }
+
+        stopRuntimeTimer();
+
+        save();
+        render();
+      }
+
+      // ---------- buttons ----------
+      btnStart.addEventListener("click", () => {
+        haptic(18);
+        if(state.tracking) stopTracking();
+        else startTracking();
+      });
+
+      btnAdjust.addEventListener("click", () => {
+        haptic(14);
+        const cur = Number(state.engineMiles || 0);
+        const input = prompt("Set current engine miles to:", String(cur.toFixed(1)));
+        if(input == null) return;
+
+        const v = Number(String(input).replace(/,/g,""));
+        if(!Number.isFinite(v) || v < 0){
+          alert("Enter a valid number.");
+          return;
+        }
+
+        state.engineMiles = v;
+        save();
+        render();
+      });
+
+      btnAddSub.addEventListener("click", () => {
+        haptic(14);
+        const input = prompt("Add or subtract miles (example: 25 or -10):", "0");
+        if(input == null) return;
+
+        const delta = Number(String(input).replace(/,/g,""));
+        if(!Number.isFinite(delta)){
+          alert("Enter a valid number.");
+          return;
+        }
+
+        state.engineMiles = Math.max(0, (Number(state.engineMiles) || 0) + delta);
+        save();
+        render();
+      });
+
+      btnClear.addEventListener("click", () => {
+        haptic(20);
+        if(!confirm("Clear ALL data on this phone?\n\nThis cannot be undone.")) return;
+
+        // keep hero image
+        const hero = localStorage.getItem(HERO_KEY);
+
+        state = structuredClone(defaultState);
+        save();
+
+        if(hero) localStorage.setItem(HERO_KEY, hero);
+        loadHero();
+        render();
+      });
+
+      // ---------- maintenance reminders ----------
+      function computeDue(rem){
+        const nowMiles = Number(state.engineMiles || 0);
+        const last = Number(rem.lastDoneMiles ?? 0);
+        const interval = Number(rem.intervalMiles ?? 0);
+        const dueAt = last + interval;
+        const remaining = dueAt - nowMiles;
+
+        let status = "ok";
+        let label = `Due at ${fmtSmallMiles(dueAt)} mi • ${fmtSmallMiles(Math.max(0, remaining))} mi remaining`;
+
+        if(remaining <= 0){
+          status = "dueNow";
+          label = `DUE NOW • due at ${fmtSmallMiles(dueAt)} mi`;
+        }else if(remaining <= Math.max(50, interval * 0.10)){
+          status = "dueSoon";
+          label = `Due soon • due at ${fmtSmallMiles(dueAt)} mi • ${fmtSmallMiles(remaining)} mi left`;
+        }
+
+        return { dueAt, remaining, status, label };
+      }
+
+      function renderReminders(){
+        const arr = Array.isArray(state.reminders) ? state.reminders : [];
+        remCount.textContent = String(arr.length);
+        remList.innerHTML = "";
+
+        if(arr.length === 0){
+          return;
+        }
+
+        // Sort: due now, due soon, ok
+        const ranked = arr
+          .map(r => ({ r, c: computeDue(r) }))
+          .sort((a,b) => a.c.remaining - b.c.remaining);
+
+        for(const item of ranked){
+          const r = item.r;
+          const c = item.c;
+
+          const div = document.createElement("div");
+          div.className = "rem";
+
+          const left = document.createElement("div");
+          left.className = "remLeft";
+
+          const name = document.createElement("div");
+          name.className = "remName";
+          name.textContent = r.name || "Reminder";
+
+          const meta = document.createElement("div");
+          meta.className = "remMeta " + (c.status === "dueNow" ? "dueNow" : c.status === "dueSoon" ? "dueSoon" : "ok");
+          meta.textContent = c.label;
+
+          left.appendChild(name);
+          left.appendChild(meta);
+
+          const actions = document.createElement("div");
+          actions.className = "remActions";
+
+          const done = document.createElement("button");
+          done.className = "mini red";
+          done.textContent = "Mark Done";
+          done.addEventListener("click", () => {
+            haptic(16);
+            r.lastDoneMiles = Number(state.engineMiles || 0);
+            save();
+            render();
+          });
+
+          const del = document.createElement("button");
+          del.className = "mini";
+          del.textContent = "Delete";
+          del.addEventListener("click", () => {
+            haptic(12);
+            if(!confirm(`Delete reminder: ${r.name}?`)) return;
+            state.reminders = state.reminders.filter(x => x.id !== r.id);
+            save();
+            render();
+          });
+
+          actions.appendChild(done);
+          actions.appendChild(del);
+
+          div.appendChild(left);
+          div.appendChild(actions);
+
+          remList.appendChild(div);
+        }
+      }
+
+      function addReminder(name, intervalMiles){
+        const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
+        const nowMiles = Number(state.engineMiles || 0);
+
+        state.reminders.push({
+          id,
+          name,
+          intervalMiles: Number(intervalMiles || 0),
+          lastDoneMiles: nowMiles
+        });
+
+        save();
+        render();
+      }
+
+      btnAddReminder.addEventListener("click", () => {
+        haptic(14);
+        const name = prompt("Reminder name (ex: Oil Change):", "Oil Change");
+        if(name == null || !name.trim()) return;
+
+        const interval = prompt("Interval in miles (ex: 3000):", "3000");
+        if(interval == null) return;
+
+        const v = Number(String(interval).replace(/,/g,""));
+        if(!Number.isFinite(v) || v <= 0){
+          alert("Enter a valid interval miles.");
+          return;
+        }
+
+        addReminder(name.trim(), v);
+      });
+
+      btnQuickDefaults.addEventListener("click", () => {
+        haptic(18);
+        if(!confirm("Add common N54 defaults?\n\nOil 3000\nSpark Plugs 15000\nWalnut Blast 50000\nCoolant 30000\nTrans Fluid 60000")) return;
+
+        // Avoid duplicates by name
+        const names = new Set((state.reminders||[]).map(r => (r.name||"").toLowerCase()));
+        const defaults = [
+          ["Oil Change", 3000],
+          ["Spark Plugs", 15000],
+          ["Walnut Blast", 50000],
+          ["Coolant Flush", 30000],
+          ["Trans Fluid", 60000]
+        ];
+
+        for(const [n,i] of defaults){
+          if(!names.has(n.toLowerCase())) addReminder(n, i);
+        }
+
+        save();
+        render();
+      });
+
+      // ---------- boot ----------
+      function boot(){
+        // splash hide (never blocks taps)
+        setTimeout(() => splash.classList.add("hidden"), 650);
+
+        loadHero();
+        render();
+
+        // if tracking was left on (rare), stop it
+        if(state.tracking){
+          state.tracking = false;
+          state.watchId = null;
+          save();
+          render();
+        }
+      }
+
+      window.addEventListener("load", boot);
+    })();
+  </script>
 </body>
 </html>
