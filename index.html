@@ -1,1454 +1,318 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>N54 Mileage Tracker</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>N54 Mileage Tracker</title>
 
-  <!-- PWA basics -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <link rel="apple-touch-icon" href="icon.png">
-  <link rel="icon" type="image/png" href="icon.png">
+<!-- PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-  <style>
-    :root{
-      --bg1:#0a0b0d;
-      --bg2:#12141a;
-      --glass: rgba(20, 22, 28, .62);
-      --glass2: rgba(20, 22, 28, .42);
-      --stroke: rgba(255,255,255,.08);
-      --text: rgba(255,255,255,.92);
-      --muted: rgba(255,255,255,.55);
-      --muted2: rgba(255,255,255,.38);
-      --red:#ff2a2a;
-      --red2:#c90f0f;
-      --shadow: 0 18px 60px rgba(0,0,0,.55);
-      --radius: 22px;
-    }
+<style>
+:root {
+  --red: #e53935;
+  --card: rgba(20,20,20,.75);
+  --glass: rgba(255,255,255,.06);
+  --radius: 22px;
+}
 
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; }
-    body{
-      margin:0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      color: var(--text);
-      background: radial-gradient(1200px 700px at 50% -10%, rgba(255,0,0,.15), transparent 55%),
-                  radial-gradient(900px 600px at 50% 110%, rgba(255,0,0,.10), transparent 55%),
-                  linear-gradient(180deg, var(--bg1), var(--bg2));
-      overflow-x:hidden;
-    }
+* { box-sizing: border-box; }
 
-    /* subtle diagonal texture (not heavy carbon) */
-    .bgTexture{
-      position:fixed; inset:0;
-      pointer-events:none;
-      opacity:.20;
-      background:
-        repeating-linear-gradient(135deg,
-          rgba(255,255,255,.10) 0px,
-          rgba(255,255,255,.10) 10px,
-          rgba(0,0,0,.0) 10px,
-          rgba(0,0,0,.0) 22px);
-      mix-blend-mode: overlay;
-      filter: blur(.2px);
-    }
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+  background: radial-gradient(circle at top, #1a1a1a, #000);
+  color: #fff;
+}
 
-    .wrap{
-      max-width: 420px;
-      margin: 0 auto;
-      padding: 14px 14px 30px;
-    }
+/* ===== HEADER ===== */
+header {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+}
 
-    /* Top bar */
-    .topbar{
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      padding: 10px 0 12px;
-      backdrop-filter: blur(14px);
-      background: linear-gradient(180deg, rgba(10,11,13,.75), rgba(10,11,13,.25));
-    }
-    .toprow{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-    }
+.menu-btn {
+  font-size: 22px;
+  cursor: pointer;
+}
 
-    .hamburger{
-      width:44px; height:44px;
-      border-radius:14px;
-      border:1px solid var(--stroke);
-      background: rgba(20,22,28,.55);
-      box-shadow: 0 10px 30px rgba(0,0,0,.35);
-      display:flex; align-items:center; justify-content:center;
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .hamburger span{
-      width:18px; height:2px;
-      background: rgba(255,255,255,.85);
-      position:relative;
-      border-radius:2px;
-    }
-    .hamburger span:before,
-    .hamburger span:after{
-      content:"";
-      position:absolute; left:0;
-      width:18px; height:2px;
-      background: rgba(255,255,255,.85);
-      border-radius:2px;
-    }
-    .hamburger span:before{ top:-6px; }
-    .hamburger span:after{ top:6px; }
+.title {
+  flex: 1;
+  text-align: center;
+  font-weight: 700;
+  letter-spacing: .5px;
+}
 
-    .title{
-      font-weight: 800;
-      letter-spacing:.6px;
-      opacity:.92;
-      font-size: 14px;
-      text-transform: uppercase;
-    }
+.gps {
+  font-size: 13px;
+  opacity: .7;
+}
 
-    .pill{
-      border:1px solid var(--stroke);
-      background: rgba(20,22,28,.55);
-      border-radius: 999px;
-      padding: 9px 12px;
-      font-size:12px;
-      color: var(--muted);
-      box-shadow: 0 10px 30px rgba(0,0,0,.35);
-    }
+/* ===== SIDE MENU ===== */
+#sideMenu {
+  position: fixed;
+  top: 0; left: -260px;
+  width: 260px; height: 100%;
+  background: #0b0b0b;
+  padding: 20px;
+  transition: .3s;
+  z-index: 99;
+}
 
-    /* Drawer */
-    .drawerBack{
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,.55);
-      opacity:0;
-      pointer-events:none;
-      transition: opacity .18s ease;
-      z-index: 90;
-    }
-    .drawerBack.show{ opacity:1; pointer-events:auto; }
+#sideMenu.open { left: 0; }
 
-    .drawer{
-      position: fixed;
-      top: 0; left: 0;
-      height: 100%;
-      width: 300px;
-      max-width: 84vw;
-      transform: translateX(-104%);
-      transition: transform .18s ease;
-      z-index: 100;
-      background: rgba(14,16,20,.92);
-      border-right: 1px solid rgba(255,255,255,.10);
-      backdrop-filter: blur(18px);
-      box-shadow: 20px 0 70px rgba(0,0,0,.6);
-      padding: 18px 14px;
-    }
-    .drawer.show{ transform: translateX(0); }
+.menu-item {
+  padding: 14px 0;
+  border-bottom: 1px solid #222;
+  font-weight: 500;
+  cursor: pointer;
+}
 
-    .drawerHeader{
-      display:flex; align-items:center; justify-content:space-between;
-      padding: 6px 6px 12px;
-    }
-    .drawerHeader .name{
-      font-weight: 900;
-      letter-spacing:.6px;
-      text-transform: uppercase;
-      font-size: 12px;
-      opacity:.9;
-    }
-    .closeBtn{
-      width:40px; height:40px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.06);
-      color: rgba(255,255,255,.85);
-      display:flex; align-items:center; justify-content:center;
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
+/* ===== MAIN ===== */
+.container {
+  padding: 14px;
+  max-width: 420px;
+  margin: auto;
+}
 
-    .menu{
-      margin-top: 8px;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-    .menuItem{
-      padding: 12px 12px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.09);
-      background: rgba(255,255,255,.06);
-      color: rgba(255,255,255,.86);
-      font-weight: 700;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .menuItem small{
-      color: rgba(255,255,255,.45);
-      font-weight: 600;
-    }
+/* ===== IMAGE CARD ===== */
+.image-card {
+  background: var(--glass);
+  border-radius: var(--radius);
+  padding: 12px;
+  text-align: center;
+}
 
-    /* Logo card (tap to change image) */
-    .logoWrap{
-      margin-top: 12px;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:8px;
-    }
-    .heroImg{
-      width: 320px;
-      max-width: 92%;
-      aspect-ratio: 1 / 1;
-      border-radius: 26px;
-      overflow:hidden;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.35);
-      box-shadow: var(--shadow);
-      position: relative;
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .heroImg img{
-      width:100%; height:100%;
-      object-fit: cover;
-      display:block;
-      filter: contrast(1.05) saturate(1.05);
-    }
-    .hint{
-      font-size: 12px;
-      color: var(--muted2);
-      text-align:center;
-      margin-bottom: 8px;
-    }
+.image-card img {
+  width: 100%;
+  border-radius: 18px;
+}
 
-    /* Glass cards */
-    .card{
-      border: 1px solid var(--stroke);
-      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(18px);
-    }
+.image-card small {
+  display: block;
+  opacity: .5;
+  margin-top: 6px;
+}
 
-    .mainCard{
-      margin-top: 10px;
-      padding: 18px 16px 16px;
-    }
+/* ===== ENGINE MILES ===== */
+.main-card {
+  margin-top: 14px;
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 18px;
+  text-align: center;
+}
 
-    .label{
-      text-align:center;
-      color: var(--muted);
-      font-weight: 700;
-      letter-spacing:.2px;
-      margin-bottom: 6px;
-    }
-    .big{
-      display:flex;
-      align-items:baseline;
-      justify-content:center;
-      gap:8px;
-      font-size: 74px;
-      font-weight: 900;
-      line-height: 1;
-      letter-spacing: -1.5px;
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .unit{
-      font-size: 22px;
-      color: var(--muted);
-      font-weight: 800;
-      letter-spacing:.3px;
-    }
+.main-card h2 {
+  margin: 0;
+  font-size: 15px;
+  opacity: .6;
+}
 
-    /* red glow line */
-    .glowLine{
-      margin: 14px auto 10px;
-      height: 4px;
-      width: 86%;
-      border-radius: 999px;
-      background: radial-gradient(closest-side, rgba(255,42,42,.95), rgba(255,42,42,.25) 55%, rgba(255,42,42,0) 100%);
-      filter: blur(.1px);
-      box-shadow: 0 0 22px rgba(255,42,42,.35);
-    }
+.miles {
+  font-size: 56px;
+  font-weight: 800;
+}
 
-    .sub{
-      text-align:center;
-      color: var(--muted);
-      font-weight: 700;
-      margin-top: 6px;
-    }
+.unit { opacity: .5; }
 
-    .row3{
-      margin-top: 14px;
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-    }
+/* 🔴 GLOW LINE */
+.glow-line {
+  height: 3px;
+  margin: 14px 0;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--red),
+    transparent
+  );
+  box-shadow:
+    0 0 8px var(--red),
+    0 0 18px rgba(229,57,53,.8);
+}
 
-    .tile{
-      padding: 14px 12px 12px;
-      min-height: 102px;
-      display:flex;
-      flex-direction:column;
-      justify-content:flex-end;
-      align-items:flex-start;
-      position:relative;
-      overflow:hidden;
-    }
+/* ===== STATS ===== */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 10px;
+  margin-top: 14px;
+}
 
-    .ico{
-      position:absolute;
-      top: 12px; left: 12px;
-      width: 34px; height: 34px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color: var(--red);
-      filter: drop-shadow(0 0 10px rgba(255,42,42,.15));
-      font-size: 22px;
-      font-weight: 900;
-    }
+.stat {
+  background: var(--card);
+  border-radius: 18px;
+  padding: 14px;
+  text-align: center;
+}
 
-    .tVal{
-      font-size: 38px;
-      font-weight: 900;
-      letter-spacing: -.6px;
-      line-height:1.05;
-      margin-top: 22px;
-    }
-    .tUnit{
-      color: var(--muted2);
-      font-weight: 800;
-      letter-spacing:.2px;
-      margin-top: 2px;
-      text-transform: lowercase;
-    }
+.stat i {
+  color: var(--red);
+  font-size: 18px;
+}
 
-    /* Buttons */
-    .bigBtn{
-      margin-top: 14px;
-      width: 100%;
-      height: 72px;
-      border: none;
-      border-radius: 999px;
-      font-weight: 900;
-      font-size: 18px;
-      letter-spacing: .6px;
-      color: white;
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
+.stat .val {
+  font-size: 20px;
+  font-weight: 700;
+}
 
-      background: radial-gradient(120% 140% at 50% 0%, rgba(255,255,255,.18), transparent 55%),
-                  linear-gradient(180deg, #ff3a3a, #c90f0f);
-      box-shadow: 0 22px 70px rgba(255,42,42,.20), 0 18px 55px rgba(0,0,0,.55);
-      border: 1px solid rgba(255,255,255,.12);
-    }
-    .bigBtn:active{ transform: translateY(1px); }
+/* ===== BUTTONS ===== */
+button {
+  border: none;
+  border-radius: 999px;
+  padding: 14px;
+  font-size: 16px;
+  cursor: pointer;
+}
 
-    .btnRow{
-      margin-top: 12px;
-      display:grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-    }
-    .miniBtn{
-      height: 54px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.06);
-      color: rgba(255,255,255,.88);
-      font-weight: 900;
-      letter-spacing:.2px;
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:10px;
-      box-shadow: 0 18px 55px rgba(0,0,0,.38);
-    }
-    .miniBtn .miniIco{
-      color: var(--red);
-      font-size: 18px;
-      filter: drop-shadow(0 0 10px rgba(255,42,42,.18));
-    }
-    .miniBtn:active{ transform: translateY(1px); }
+.primary {
+  background: linear-gradient(180deg,#ff4b4b,#b71c1c);
+  color: #fff;
+  font-weight: 700;
+  margin-top: 18px;
+  box-shadow: 0 10px 25px rgba(229,57,53,.6);
+}
 
-    .foot{
-      margin-top: 10px;
-      text-align:center;
-      color: rgba(255,255,255,.35);
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing:.2px;
-    }
+.row {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 10px;
+  margin-top: 14px;
+}
 
-    /* Sections */
-    .section{
-      margin-top: 16px;
-      padding: 14px;
-    }
-    .sectionHead{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom: 10px;
-    }
-    .sectionTitle{
-      font-size: 22px;
-      font-weight: 1000;
-      letter-spacing: .2px;
-    }
-    .badge{
-      padding: 6px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.06);
-      color: rgba(255,255,255,.65);
-      font-weight: 900;
-      font-size: 12px;
-    }
+.secondary {
+  background: var(--glass);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
 
-    .mutedText{ color: rgba(255,255,255,.55); font-weight:700; }
+/* ===== MAINTENANCE ===== */
+.section {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-top: 18px;
+}
 
-    .secBtns{
-      margin-top: 12px;
-      display:flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .secBtn{
-      height: 46px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.06);
-      color: rgba(255,255,255,.88);
-      font-weight: 900;
-      padding: 0 14px;
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .secBtn.red{
-      background: linear-gradient(180deg, #ff3a3a, #c90f0f);
-      border: 1px solid rgba(255,255,255,.10);
-    }
+.section h3 {
+  margin: 0 0 10px;
+}
 
-    .list{
-      margin-top: 12px;
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-    }
-    .item{
-      padding: 12px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.05);
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:10px;
-    }
-    .item .left{
-      min-width:0;
-    }
-    .item .name{
-      font-weight: 1000;
-      letter-spacing:.2px;
-      margin-bottom: 4px;
-      word-break: break-word;
-    }
-    .item .meta{
-      color: rgba(255,255,255,.45);
-      font-weight: 800;
-      font-size: 12px;
-    }
-    .item .actions{
-      display:flex;
-      gap:8px;
-      flex-shrink:0;
-    }
-    .aBtn{
-      width: 42px; height: 42px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.06);
-      color: rgba(255,255,255,.85);
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-      display:flex; align-items:center; justify-content:center;
-      font-weight: 1000;
-    }
-    .aBtn.redTxt{ color: var(--red); }
+.section button {
+  margin-top: 8px;
+}
 
-    /* Modal */
-    .modalBack{
-      position: fixed;
-      inset:0;
-      background: rgba(0,0,0,.62);
-      opacity:0;
-      pointer-events:none;
-      transition: opacity .18s ease;
-      z-index: 200;
-      display:flex;
-      align-items:flex-end;
-      justify-content:center;
-      padding: 14px;
-    }
-    .modalBack.show{ opacity:1; pointer-events:auto; }
-    .modal{
-      width: min(420px, 100%);
-      border-radius: 22px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(16,18,22,.92);
-      backdrop-filter: blur(18px);
-      box-shadow: 0 30px 100px rgba(0,0,0,.7);
-      overflow:hidden;
-    }
-    .modalTop{
-      padding: 12px 12px 10px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      border-bottom: 1px solid rgba(255,255,255,.08);
-    }
-    .modalTop .h{
-      font-weight: 1000;
-      letter-spacing:.2px;
-    }
-    .modalBody{ padding: 12px; }
-    .field{
-      display:flex; flex-direction:column;
-      gap:8px;
-      margin-bottom: 10px;
-    }
-    input[type="text"], textarea, input[type="number"], input[type="date"]{
-      width:100%;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.06);
-      color: rgba(255,255,255,.90);
-      font-weight: 800;
-      padding: 12px 12px;
-      outline: none;
-    }
-    textarea{ min-height: 120px; resize: vertical; }
-    .modalBtns{
-      display:flex; gap:10px; justify-content:flex-end;
-      padding: 12px;
-      border-top: 1px solid rgba(255,255,255,.08);
-    }
-
-    /* hidden file input */
-    #fileInput{ display:none; }
-
-  </style>
+/* ===== FOOTER ===== */
+footer {
+  text-align: center;
+  font-size: 12px;
+  opacity: .5;
+  margin: 20px 0;
+}
+</style>
 </head>
+
 <body>
-  <div class="bgTexture"></div>
 
-  <!-- Drawer -->
-  <div class="drawerBack" id="drawerBack"></div>
-  <div class="drawer" id="drawer">
-    <div class="drawerHeader">
-      <div class="name">N54 MENU</div>
-      <div class="closeBtn" id="drawerClose">✕</div>
+<div id="sideMenu">
+  <div class="menu-item">Saved Files</div>
+  <div class="menu-item">Snapshots</div>
+  <div class="menu-item">About</div>
+  <div class="menu-item">Settings</div>
+  <div class="menu-item">Export</div>
+</div>
+
+<header>
+  <div class="menu-btn" onclick="toggleMenu()">☰</div>
+  <div class="title">N54 MILEAGE TRACKER</div>
+  <div class="gps">GPS: Stopped</div>
+</header>
+
+<div class="container">
+
+  <div class="image-card" onclick="pickImage()">
+    <img id="carImg" src="icon.png">
+    <small>Tap image to change (saved on this phone)</small>
+  </div>
+
+  <div class="main-card">
+    <h2>Current Engine Miles</h2>
+    <div class="miles" id="engineMiles">0.0</div>
+    <div class="unit">miles</div>
+    <div class="glow-line"></div>
+    <div class="unit">Trip Miles: <span id="tripMiles">0.0</span></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <i>⏱</i>
+      <div class="val" id="runtime">00:00:00</div>
+      <small>runtime</small>
     </div>
-
-    <div class="menu">
-      <div class="menuItem" id="goSaved">
-        <div>Saved Files <small>(logs)</small></div>
-        <div>›</div>
-      </div>
-
-      <div class="menuItem" id="goTop">
-        <div>Back to Top</div>
-        <div>›</div>
-      </div>
-
-      <!-- placeholders (you said you want at least 5, we can rename later) -->
-      <div class="menuItem" data-soon="1">
-        <div>Coming Soon</div>
-        <div>›</div>
-      </div>
-      <div class="menuItem" data-soon="1">
-        <div>Coming Soon</div>
-        <div>›</div>
-      </div>
-      <div class="menuItem" data-soon="1">
-        <div>Coming Soon</div>
-        <div>›</div>
-      </div>
+    <div class="stat">
+      <i>📍</i>
+      <div class="val" id="tracked">0.0</div>
+      <small>tracked</small>
+    </div>
+    <div class="stat">
+      <i>🏁</i>
+      <div class="val" id="session">0.0</div>
+      <small>session</small>
     </div>
   </div>
 
-  <!-- Modal -->
-  <div class="modalBack" id="modalBack">
-    <div class="modal">
-      <div class="modalTop">
-        <div class="h" id="modalTitle">Add Log</div>
-        <div class="closeBtn" id="modalClose">✕</div>
-      </div>
-      <div class="modalBody">
-        <div class="field">
-          <div class="mutedText">Name</div>
-          <input id="logName" type="text" placeholder="MHD log - pull 3rd gear" />
-        </div>
-        <div class="field">
-          <div class="mutedText">Miles (optional)</div>
-          <input id="logMiles" type="number" step="0.1" placeholder="e.g. 96100" />
-        </div>
-        <div class="field">
-          <div class="mutedText">Notes / paste log text</div>
-          <textarea id="logText" placeholder="Paste your MHD log text here (or use Upload)."></textarea>
-        </div>
-      </div>
-      <div class="modalBtns">
-        <button class="secBtn" id="modalCancel">Cancel</button>
-        <button class="secBtn red" id="modalSave">Save</button>
-      </div>
-    </div>
+  <button class="primary">▶ START TRACKING</button>
+
+  <div class="row">
+    <button class="secondary">📌 Adjust</button>
+    <button class="secondary">＋－ Add/Sub</button>
+    <button class="secondary">🗑 Clear</button>
   </div>
 
-  <input id="fileInput" type="file" />
+  <button class="secondary" style="margin-top:14px;">💾 Save Miles Snapshot</button>
 
-  <div class="wrap" id="top">
-    <div class="topbar">
-      <div class="toprow">
-        <div class="hamburger" id="hamburger"><span></span></div>
-        <div class="title">N54 Mileage Tracker</div>
-        <div class="pill" id="gpsPill">GPS: Stopped</div>
-      </div>
-    </div>
-
-    <!-- Hero image (tap to change & saved on phone) -->
-    <div class="logoWrap">
-      <div class="heroImg" id="heroTap" title="Tap to change image">
-        <img id="heroImg" src="icon.png" alt="N54" />
-      </div>
-      <div class="hint">Tap image to change (saved on this phone)</div>
-    </div>
-
-    <!-- Main miles card -->
-    <div class="card mainCard">
-      <div class="label">Current Engine Miles</div>
-
-      <div class="big" id="engineMilesTap" title="Tap to set">
-        <div id="engineMiles">0.0</div>
-      </div>
-      <div class="unit">miles</div>
-
-      <div class="glowLine"></div>
-
-      <div class="sub">Trip Miles: <span id="tripMiles">0.0</span></div>
-    </div>
-
-    <div class="row3">
-      <div class="card tile">
-        <div class="ico">🕒</div>
-        <div class="tVal" id="totalRuntime">00:00:00</div>
-        <div class="tUnit">runtime</div>
-      </div>
-      <div class="card tile">
-        <div class="ico">📍</div>
-        <div class="tVal"><span id="totalTracked">0.0</span></div>
-        <div class="tUnit">tracked</div>
-      </div>
-      <div class="card tile">
-        <div class="ico">🏁</div>
-        <div class="tVal"><span id="sessionMiles">0.0</span></div>
-        <div class="tUnit">session</div>
-      </div>
-    </div>
-
-    <button class="bigBtn" id="btnStart">▶ START TRACKING</button>
-
-    <div class="btnRow">
-      <button class="miniBtn" id="btnAdjust">
-        <span class="miniIco">📌</span> Adjust
-      </button>
-      <button class="miniBtn" id="btnAddSub">
-        <span class="miniIco">➕➖</span> Add/Sub
-      </button>
-      <button class="miniBtn" id="btnClear">
-        <span class="miniIco">🗑️</span> Clear
-      </button>
-    </div>
-
-    <div class="btnRow" style="margin-top:10px;">
-      <button class="miniBtn" id="btnSaveSnapshot" style="grid-column: span 3;">
-        <span class="miniIco">💾</span> Save Miles Snapshot
-      </button>
-    </div>
-
-    <div class="foot" id="snapshotInfo">No snapshot saved yet.</div>
-
-    <div class="foot">Runs on your device • localStorage + IndexedDB • no account</div>
-
-    <!-- Maintenance Reminders (STAYS RIGHT HERE) -->
-    <div class="card section" id="maintSection">
-      <div class="sectionHead">
-        <div class="sectionTitle">Maintenance Reminders</div>
-        <div class="badge"><span id="maintCount">0</span> items</div>
-      </div>
-
-      <div class="mutedText" id="maintEmpty">
-        No reminders yet. Tap “Quick Add N54 Defaults” or “Add Reminder”.
-      </div>
-
-      <div class="secBtns">
-        <button class="secBtn" id="btnAddMaint">Add Reminder</button>
-        <button class="secBtn red" id="btnQuickMaint">Quick Add N54 Defaults</button>
-      </div>
-
-      <div class="list" id="maintList"></div>
-    </div>
-
-    <!-- Saved Files / Logs section -->
-    <div class="card section" id="savedSection">
-      <div class="sectionHead">
-        <div class="sectionTitle">Saved Files</div>
-        <div class="badge"><span id="fileCount">0</span> items</div>
-      </div>
-
-      <div class="mutedText">
-        Save MHD logs + notes here. Stored on this phone (offline).
-      </div>
-
-      <div class="secBtns">
-        <button class="secBtn" id="btnAddLog">Add Log (paste)</button>
-        <button class="secBtn red" id="btnUpload">Upload File</button>
-      </div>
-
-      <div class="list" id="fileList"></div>
-    </div>
+  <div class="section">
+    <h3>Maintenance Reminders</h3>
+    <p>No reminders yet.</p>
+    <button class="secondary">Add Reminder</button>
+    <button class="primary">Quick Add N54 Defaults</button>
   </div>
 
-  <script>
-    /********************
-     * Storage helpers
-     ********************/
-    const LS_KEY = "n54_app_state_v4";
-    const HERO_KEY = "n54_hero_image_dataurl";
-    const SNAP_KEY = "n54_miles_snapshot_v1";
-    const DB_NAME = "n54_files_db";
-    const DB_STORE = "files";
+  <footer>
+    Runs on your device • localStorage + IndexedDB • no account
+  </footer>
+</div>
+
+<input type="file" id="imgPicker" accept="image/*" hidden>
+
+<script>
+function toggleMenu(){
+  document.getElementById("sideMenu").classList.toggle("open");
+}
+
+function pickImage(){
+  document.getElementById("imgPicker").click();
+}
+
+document.getElementById("imgPicker").addEventListener("change", e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const r = new FileReader();
+  r.onload = ()=> {
+    localStorage.setItem("carImg", r.result);
+    document.getElementById("carImg").src = r.result;
+  }
+  r.readAsDataURL(file);
+});
+
+const saved = localStorage.getItem("carImg");
+if(saved) document.getElementById("carImg").src = saved;
+</script>
 
-    let db;
-
-    function loadState(){
-      try{
-        return JSON.parse(localStorage.getItem(LS_KEY)) || {};
-      }catch(e){ return {}; }
-    }
-    function saveState(patch){
-      const cur = loadState();
-      const next = {...cur, ...patch};
-      localStorage.setItem(LS_KEY, JSON.stringify(next));
-      return next;
-    }
-
-    function fmt1(n){
-      const x = Number(n || 0);
-      return (Math.round(x * 10) / 10).toFixed(1);
-    }
-
-    function nowISO(){
-      return new Date().toISOString();
-    }
-
-    function hapticLight(){
-      try{
-        if (navigator.vibrate) navigator.vibrate(15);
-      }catch(e){}
-    }
-
-    /********************
-     * IndexedDB
-     ********************/
-    function openDB(){
-      return new Promise((resolve, reject) => {
-        const req = indexedDB.open(DB_NAME, 1);
-        req.onupgradeneeded = () => {
-          const d = req.result;
-          if (!d.objectStoreNames.contains(DB_STORE)){
-            const store = d.createObjectStore(DB_STORE, { keyPath: "id" });
-            store.createIndex("createdAt", "createdAt");
-          }
-        };
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-      });
-    }
-
-    function dbPut(item){
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(DB_STORE, "readwrite");
-        tx.objectStore(DB_STORE).put(item);
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
-      });
-    }
-
-    function dbGetAll(){
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(DB_STORE, "readonly");
-        const req = tx.objectStore(DB_STORE).getAll();
-        req.onsuccess = () => resolve(req.result || []);
-        req.onerror = () => reject(req.error);
-      });
-    }
-
-    function dbDelete(id){
-      return new Promise((resolve, reject) => {
-        const tx = db.transaction(DB_STORE, "readwrite");
-        tx.objectStore(DB_STORE).delete(id);
-        tx.oncomplete = () => resolve();
-        tx.onerror = () => reject(tx.error);
-      });
-    }
-
-    function makeId(){
-      return Math.random().toString(16).slice(2) + "-" + Date.now().toString(16);
-    }
-
-    /********************
-     * UI refs
-     ********************/
-    const elEngineMiles = document.getElementById("engineMiles");
-    const elTripMiles = document.getElementById("tripMiles");
-    const elTotalRuntime = document.getElementById("totalRuntime");
-    const elTotalTracked = document.getElementById("totalTracked");
-    const elSessionMiles = document.getElementById("sessionMiles");
-    const elGpsPill = document.getElementById("gpsPill");
-    const elSnapshotInfo = document.getElementById("snapshotInfo");
-
-    const btnStart = document.getElementById("btnStart");
-    const btnAdjust = document.getElementById("btnAdjust");
-    const btnAddSub = document.getElementById("btnAddSub");
-    const btnClear = document.getElementById("btnClear");
-    const btnSaveSnapshot = document.getElementById("btnSaveSnapshot");
-
-    // Drawer
-    const hamburger = document.getElementById("hamburger");
-    const drawer = document.getElementById("drawer");
-    const drawerBack = document.getElementById("drawerBack");
-    const drawerClose = document.getElementById("drawerClose");
-    const goSaved = document.getElementById("goSaved");
-    const goTop = document.getElementById("goTop");
-
-    // Hero image
-    const heroTap = document.getElementById("heroTap");
-    const heroImg = document.getElementById("heroImg");
-
-    // Maintenance
-    const maintCount = document.getElementById("maintCount");
-    const maintEmpty = document.getElementById("maintEmpty");
-    const maintList = document.getElementById("maintList");
-    const btnAddMaint = document.getElementById("btnAddMaint");
-    const btnQuickMaint = document.getElementById("btnQuickMaint");
-
-    // Saved files
-    const fileCount = document.getElementById("fileCount");
-    const fileList = document.getElementById("fileList");
-    const btnAddLog = document.getElementById("btnAddLog");
-    const btnUpload = document.getElementById("btnUpload");
-    const fileInput = document.getElementById("fileInput");
-
-    // Modal
-    const modalBack = document.getElementById("modalBack");
-    const modalClose = document.getElementById("modalClose");
-    const modalCancel = document.getElementById("modalCancel");
-    const modalSave = document.getElementById("modalSave");
-    const logName = document.getElementById("logName");
-    const logMiles = document.getElementById("logMiles");
-    const logText = document.getElementById("logText");
-
-    /********************
-     * App state
-     ********************/
-    let state = loadState();
-    // defaults
-    state.engineMiles = Number(state.engineMiles || 0);
-    state.tripMiles = Number(state.tripMiles || 0);
-    state.totalTracked = Number(state.totalTracked || 0);
-    state.totalRuntimeSec = Number(state.totalRuntimeSec || 0);
-    state.sessionMiles = Number(state.sessionMiles || 0);
-    state.isTracking = !!state.isTracking;
-
-    let watchId = null;
-    let lastPos = null;
-    let lastTick = null;
-    let runtimeTimer = null;
-
-    function render(){
-      elEngineMiles.textContent = fmt1(state.engineMiles);
-      elTripMiles.textContent = fmt1(state.tripMiles);
-      elTotalTracked.textContent = fmt1(state.totalTracked);
-      elSessionMiles.textContent = fmt1(state.sessionMiles);
-
-      // runtime
-      const s = Math.max(0, Math.floor(state.totalRuntimeSec || 0));
-      const hh = String(Math.floor(s/3600)).padStart(2,"0");
-      const mm = String(Math.floor((s%3600)/60)).padStart(2,"0");
-      const ss = String(s%60).padStart(2,"0");
-      elTotalRuntime.textContent = `${hh}:${mm}:${ss}`;
-
-      // tracking label
-      elGpsPill.textContent = state.isTracking ? "GPS: Tracking" : "GPS: Stopped";
-      btnStart.textContent = state.isTracking ? "■ STOP TRACKING" : "▶ START TRACKING";
-    }
-
-    function save(){
-      saveState(state);
-    }
-
-    /********************
-     * Miles snapshot (manual backup)
-     ********************/
-    function loadSnapshot(){
-      try{
-        return JSON.parse(localStorage.getItem(SNAP_KEY)) || null;
-      }catch(e){ return null; }
-    }
-
-    function renderSnapshot(){
-      const snap = loadSnapshot();
-      if(!snap){
-        elSnapshotInfo.textContent = "No snapshot saved yet.";
-        return;
-      }
-      const when = new Date(snap.at);
-      elSnapshotInfo.textContent = `Snapshot saved: ${snap.miles} miles • ${when.toLocaleString()}`;
-    }
-
-    btnSaveSnapshot.addEventListener("click", () => {
-      hapticLight();
-      const snap = { miles: fmt1(state.engineMiles), at: nowISO() };
-      localStorage.setItem(SNAP_KEY, JSON.stringify(snap));
-      renderSnapshot();
-      alert("Miles snapshot saved ✅");
-    });
-
-    /********************
-     * Drawer controls
-     ********************/
-    function openDrawer(){
-      drawer.classList.add("show");
-      drawerBack.classList.add("show");
-    }
-    function closeDrawer(){
-      drawer.classList.remove("show");
-      drawerBack.classList.remove("show");
-    }
-    hamburger.addEventListener("click", () => { hapticLight(); openDrawer(); });
-    drawerClose.addEventListener("click", () => { hapticLight(); closeDrawer(); });
-    drawerBack.addEventListener("click", () => closeDrawer());
-
-    goSaved.addEventListener("click", () => {
-      hapticLight();
-      closeDrawer();
-      document.getElementById("savedSection").scrollIntoView({behavior:"smooth", block:"start"});
-    });
-    goTop.addEventListener("click", () => {
-      hapticLight();
-      closeDrawer();
-      document.getElementById("top").scrollIntoView({behavior:"smooth", block:"start"});
-    });
-
-    document.querySelectorAll('[data-soon="1"]').forEach(el=>{
-      el.addEventListener("click", ()=>{
-        hapticLight();
-        alert("We’ll rename this menu item later 🔥");
-      });
-    });
-
-    /********************
-     * Tap miles to set
-     ********************/
-    document.getElementById("engineMilesTap").addEventListener("click", () => {
-      hapticLight();
-      const v = prompt("Set current engine miles:", fmt1(state.engineMiles));
-      if(v === null) return;
-      const n = Number(String(v).replace(/,/g,"").trim());
-      if(Number.isFinite(n) && n >= 0){
-        state.engineMiles = n;
-        save();
-        render();
-      }else{
-        alert("Invalid number.");
-      }
-    });
-
-    /********************
-     * GPS tracking (foreground only)
-     ********************/
-    function distMiles(lat1, lon1, lat2, lon2){
-      // Haversine
-      const R = 6371000; // meters
-      const toRad = x => x * Math.PI / 180;
-      const dLat = toRad(lat2-lat1);
-      const dLon = toRad(lon2-lon1);
-      const a =
-        Math.sin(dLat/2)**2 +
-        Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      const meters = R * c;
-      return meters / 1609.344;
-    }
-
-    function startRuntime(){
-      lastTick = Date.now();
-      runtimeTimer = setInterval(() => {
-        const now = Date.now();
-        const delta = Math.max(0, (now - lastTick) / 1000);
-        lastTick = now;
-        state.totalRuntimeSec += delta;
-        save();
-        render();
-      }, 1000);
-    }
-
-    function stopRuntime(){
-      if(runtimeTimer){
-        clearInterval(runtimeTimer);
-        runtimeTimer = null;
-      }
-    }
-
-    async function startTracking(){
-      if(!navigator.geolocation){
-        alert("GPS not available.");
-        return;
-      }
-      state.isTracking = true;
-      save();
-      render();
-      startRuntime();
-
-      watchId = navigator.geolocation.watchPosition(
-        (pos) => {
-          const { latitude, longitude, accuracy } = pos.coords;
-
-          // ignore really bad points
-          if(accuracy && accuracy > 60) return;
-
-          if(!lastPos){
-            lastPos = { latitude, longitude };
-            return;
-          }
-
-          const d = distMiles(lastPos.latitude, lastPos.longitude, latitude, longitude);
-
-          // ignore tiny jitter and huge jumps
-          if(d < 0.02) { lastPos = { latitude, longitude }; return; }
-          if(d > 2.0)  { lastPos = { latitude, longitude }; return; }
-
-          state.tripMiles += d;
-          state.sessionMiles += d;
-          state.totalTracked += d;
-          state.engineMiles += d;
-
-          lastPos = { latitude, longitude };
-          save();
-          render();
-        },
-        (err) => {
-          console.log(err);
-          alert("GPS error. Make sure Location is allowed.");
-          stopTracking();
-        },
-        { enableHighAccuracy:true, maximumAge:0, timeout: 15000 }
-      );
-    }
-
-    function stopTracking(){
-      state.isTracking = false;
-      save();
-      render();
-      stopRuntime();
-      if(watchId !== null){
-        navigator.geolocation.clearWatch(watchId);
-        watchId = null;
-      }
-      lastPos = null;
-    }
-
-    btnStart.addEventListener("click", async () => {
-      hapticLight();
-      if(state.isTracking){
-        stopTracking();
-      }else{
-        await startTracking();
-      }
-    });
-
-    /********************
-     * Adjust / AddSub / Clear
-     ********************/
-    btnAdjust.addEventListener("click", () => {
-      hapticLight();
-      const v = prompt("Set engine miles to:", fmt1(state.engineMiles));
-      if(v === null) return;
-      const n = Number(String(v).replace(/,/g,"").trim());
-      if(Number.isFinite(n) && n >= 0){
-        state.engineMiles = n;
-        save();
-        render();
-      }else alert("Invalid number.");
-    });
-
-    btnAddSub.addEventListener("click", () => {
-      hapticLight();
-      const v = prompt("Add/Subtract miles (use negative to subtract):", "0.0");
-      if(v === null) return;
-      const n = Number(String(v).replace(/,/g,"").trim());
-      if(Number.isFinite(n)){
-        state.engineMiles = Math.max(0, state.engineMiles + n);
-        save();
-        render();
-      }else alert("Invalid number.");
-    });
-
-    btnClear.addEventListener("click", () => {
-      hapticLight();
-      const ok = confirm("Clear trip/session/runtime data? (Engine miles stays unless you set it.)");
-      if(!ok) return;
-      state.tripMiles = 0;
-      state.sessionMiles = 0;
-      state.totalRuntimeSec = 0;
-      save();
-      render();
-    });
-
-    /********************
-     * Hero image change (saved on phone)
-     ********************/
-    function loadHero(){
-      const d = localStorage.getItem(HERO_KEY);
-      if(d) heroImg.src = d;
-    }
-
-    heroTap.addEventListener("click", () => {
-      hapticLight();
-      fileInput.accept = "image/*";
-      fileInput.click();
-    });
-
-    fileInput.addEventListener("change", async (e) => {
-      const f = e.target.files && e.target.files[0];
-      if(!f) return;
-
-      // if it's image, set hero
-      if(f.type.startsWith("image/")){
-        const reader = new FileReader();
-        reader.onload = () => {
-          const dataUrl = reader.result;
-          localStorage.setItem(HERO_KEY, dataUrl);
-          heroImg.src = dataUrl;
-        };
-        reader.readAsDataURL(f);
-      }
-      fileInput.value = "";
-    });
-
-    /********************
-     * Maintenance reminders (simple localStorage version)
-     ********************/
-    const MAINT_KEY = "n54_maint_v1";
-
-    function loadMaint(){
-      try{ return JSON.parse(localStorage.getItem(MAINT_KEY)) || []; }
-      catch(e){ return []; }
-    }
-    function saveMaint(list){
-      localStorage.setItem(MAINT_KEY, JSON.stringify(list));
-    }
-
-    function renderMaint(){
-      const list = loadMaint();
-      maintCount.textContent = list.length;
-      maintEmpty.style.display = list.length ? "none" : "block";
-      maintList.innerHTML = "";
-
-      list.forEach((it) => {
-        const wrap = document.createElement("div");
-        wrap.className = "item";
-        const left = document.createElement("div");
-        left.className = "left";
-        left.innerHTML = `
-          <div class="name">${escapeHtml(it.name)}</div>
-          <div class="meta">Interval: ${it.interval || "-"} miles • Last done: ${it.lastDoneMiles ?? "-"}</div>
-        `;
-
-        const actions = document.createElement("div");
-        actions.className = "actions";
-
-        const done = document.createElement("button");
-        done.className = "aBtn redTxt";
-        done.textContent = "✓";
-        done.title = "Mark done (sets last done to current engine miles)";
-        done.onclick = () => {
-          hapticLight();
-          it.lastDoneMiles = Number(fmt1(state.engineMiles));
-          saveMaint(list);
-          renderMaint();
-        };
-
-        const del = document.createElement("button");
-        del.className = "aBtn";
-        del.textContent = "🗑️";
-        del.title = "Delete";
-        del.onclick = () => {
-          hapticLight();
-          const ok = confirm("Delete this reminder?");
-          if(!ok) return;
-          const next = list.filter(x => x.id !== it.id);
-          saveMaint(next);
-          renderMaint();
-        };
-
-        actions.appendChild(done);
-        actions.appendChild(del);
-
-        wrap.appendChild(left);
-        wrap.appendChild(actions);
-        maintList.appendChild(wrap);
-      });
-    }
-
-    btnAddMaint.addEventListener("click", () => {
-      hapticLight();
-      const name = prompt("Reminder name (example: Oil change):", "");
-      if(!name) return;
-      const interval = prompt("Interval miles (example: 3000):", "");
-      const item = {
-        id: makeId(),
-        name: name.trim(),
-        interval: interval ? interval.trim() : "",
-        lastDoneMiles: Number(fmt1(state.engineMiles))
-      };
-      const list = loadMaint();
-      list.unshift(item);
-      saveMaint(list);
-      renderMaint();
-    });
-
-    btnQuickMaint.addEventListener("click", () => {
-      hapticLight();
-      const ok = confirm("Add common N54 defaults?");
-      if(!ok) return;
-
-      const base = Number(fmt1(state.engineMiles));
-      const defaults = [
-        { name:"Oil change", interval:"3000", lastDoneMiles: base },
-        { name:"Spark plugs", interval:"15000", lastDoneMiles: base },
-        { name:"Walnut blast", interval:"40000", lastDoneMiles: base },
-        { name:"Coolant flush", interval:"60000", lastDoneMiles: base },
-        { name:"Brake fluid", interval:"24000", lastDoneMiles: base },
-      ].map(x => ({...x, id: makeId()}));
-
-      const list = loadMaint();
-      defaults.forEach(d => list.unshift(d));
-      saveMaint(list);
-      renderMaint();
-    });
-
-    /********************
-     * Saved Files / Logs
-     ********************/
-    async function refreshFiles(){
-      const items = await dbGetAll();
-      // newest first
-      items.sort((a,b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
-      fileCount.textContent = items.length;
-
-      fileList.innerHTML = "";
-      items.forEach(it => {
-        const row = document.createElement("div");
-        row.className = "item";
-
-        const left = document.createElement("div");
-        left.className = "left";
-        const milesStr = (it.miles !== null && it.miles !== undefined && it.miles !== "")
-          ? ` • Miles: ${it.miles}`
-          : "";
-        left.innerHTML = `
-          <div class="name">${escapeHtml(it.name || "Untitled")}</div>
-          <div class="meta">${new Date(it.createdAt).toLocaleString()}${milesStr}${it.kind ? ` • ${it.kind}` : ""}</div>
-        `;
-
-        const actions = document.createElement("div");
-        actions.className = "actions";
-
-        const view = document.createElement("button");
-        view.className = "aBtn redTxt";
-        view.textContent = "👁";
-        view.title = "View";
-        view.onclick = async () => {
-          hapticLight();
-          if(it.kind === "text"){
-            alert((it.text || "").slice(0, 2000) || "(empty)");
-          }else if(it.kind === "file" && it.blob){
-            const url = URL.createObjectURL(it.blob);
-            window.open(url, "_blank");
-            setTimeout(()=>URL.revokeObjectURL(url), 60000);
-          }
-        };
-
-        const del = document.createElement("button");
-        del.className = "aBtn";
-        del.textContent = "🗑️";
-        del.title = "Delete";
-        del.onclick = async () => {
-          hapticLight();
-          const ok = confirm("Delete this saved item?");
-          if(!ok) return;
-          await dbDelete(it.id);
-          await refreshFiles();
-        };
-
-        actions.appendChild(view);
-        actions.appendChild(del);
-
-        row.appendChild(left);
-        row.appendChild(actions);
-        fileList.appendChild(row);
-      });
-    }
-
-    // Modal helpers
-    function openModal(){
-      modalBack.classList.add("show");
-      logName.value = "";
-      logMiles.value = "";
-      logText.value = "";
-      logName.focus();
-    }
-    function closeModal(){
-      modalBack.classList.remove("show");
-    }
-
-    btnAddLog.addEventListener("click", () => { hapticLight(); openModal(); });
-    modalClose.addEventListener("click", () => closeModal());
-    modalCancel.addEventListener("click", () => closeModal());
-    modalBack.addEventListener("click", (e) => {
-      if(e.target === modalBack) closeModal();
-    });
-
-    modalSave.addEventListener("click", async () => {
-      hapticLight();
-      const name = (logName.value || "").trim() || "Untitled log";
-      const miles = (logMiles.value || "").trim();
-      const text = (logText.value || "").trim();
-
-      if(!text){
-        alert("Paste some text (or use Upload File).");
-        return;
-      }
-
-      const item = {
-        id: makeId(),
-        kind: "text",
-        name,
-        miles: miles ? Number(miles) : "",
-        createdAt: nowISO(),
-        text
-      };
-
-      await dbPut(item);
-      closeModal();
-      await refreshFiles();
-      alert("Saved ✅");
-    });
-
-    btnUpload.addEventListener("click", () => {
-      hapticLight();
-      fileInput.accept = "*/*";
-      fileInput.click();
-    });
-
-    // Upload handling (non-image files go to Saved Files)
-    fileInput.addEventListener("change", async (e) => {
-      const f = e.target.files && e.target.files[0];
-      if(!f) return;
-
-      // if image, hero handler already ran above (it checks type startsWith image/)
-      if(f.type.startsWith("image/")){
-        fileInput.value = "";
-        return;
-      }
-
-      const name = prompt("Name for this file:", f.name || "Log file");
-      if(name === null){ fileInput.value = ""; return; }
-
-      const blob = f; // store as Blob
-
-      const item = {
-        id: makeId(),
-        kind: "file",
-        name: (name || f.name || "Saved file").trim(),
-        miles: Number(fmt1(state.engineMiles)),
-        createdAt: nowISO(),
-        fileName: f.name,
-        fileType: f.type || "application/octet-stream",
-        blob
-      };
-
-      try{
-        await dbPut(item);
-        await refreshFiles();
-        alert("File saved ✅");
-      }catch(err){
-        console.log(err);
-        alert("Could not save file. (If the file is huge, try a smaller one.)");
-      }
-
-      fileInput.value = "";
-    });
-
-    /********************
-     * Utilities
-     ********************/
-    function escapeHtml(s){
-      return String(s)
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#039;");
-    }
-
-    /********************
-     * Init
-     ********************/
-    (async function init(){
-      db = await openDB();
-      loadHero();
-      renderSnapshot();
-      renderMaint();
-      await refreshFiles();
-      render();
-
-      // If it was tracking when safari reloaded, stop safely (iOS reloads background tabs)
-      if(state.isTracking){
-        state.isTracking = false;
-        save();
-        render();
-      }
-    })();
-  </script>
 </body>
 </html>
