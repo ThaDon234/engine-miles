@@ -2,114 +2,117 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>N54 Mileage Tracker</title>
 
-  <!-- iOS PWA -->
+  <!-- PWA / iOS -->
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-
-  <!-- Icons -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="apple-touch-icon" href="icon.png">
   <link rel="icon" type="image/png" href="icon.png">
 
   <style>
     :root{
-      --bg0:#040506;
-      --bg1:#0b0d10;
-      --card: rgba(20,22,26,.55);
-      --card2: rgba(18,20,24,.45);
-      --stroke: rgba(255,255,255,.08);
-      --txt:#f4f6fb;
-      --muted: rgba(244,246,251,.55);
-      --red:#ff2a2a;
-      --red2:#b70000;
+      --bg0:#07080b;
+      --bg1:#0b0d12;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.08);
+      --stroke: rgba(255,255,255,.10);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.55);
+      --muted2: rgba(255,255,255,.35);
+      --red: #ff2a2a;
+      --red2:#ff4b4b;
       --shadow: 0 18px 55px rgba(0,0,0,.55);
-      --radius: 26px;
+      --radius: 22px;
+      --radius2: 18px;
     }
 
-    *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
-    html,body{ height:100%; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
     body{
       margin:0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
-      color:var(--txt);
-      background: radial-gradient(1200px 900px at 20% 10%, rgba(255,40,40,.10), transparent 55%),
-                  radial-gradient(900px 700px at 80% 25%, rgba(255,40,40,.07), transparent 60%),
-                  linear-gradient(145deg, var(--bg0), var(--bg1));
+      color:var(--text);
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      background: radial-gradient(1200px 900px at 50% -250px, rgba(255,40,40,.18), transparent 60%),
+                  radial-gradient(900px 800px at 20% 20%, rgba(255,255,255,.06), transparent 60%),
+                  linear-gradient(180deg, var(--bg0), var(--bg1));
       overflow-x:hidden;
     }
 
-    /* subtle diagonal texture (lighter than full carbon) */
+    /* Subtle diagonal texture (NOT heavy carbon) */
     .texture{
       position:fixed; inset:0;
-      background:
-        linear-gradient(135deg, rgba(255,255,255,.05) 0%, rgba(255,255,255,0) 40%),
-        repeating-linear-gradient(135deg,
-          rgba(255,255,255,.06) 0px,
-          rgba(255,255,255,.06) 10px,
-          rgba(255,255,255,0) 10px,
-          rgba(255,255,255,0) 26px
-        );
-      opacity:.18;
       pointer-events:none;
-      z-index:0;
+      opacity:.22;
+      background:
+        repeating-linear-gradient(135deg,
+          rgba(255,255,255,.05) 0,
+          rgba(255,255,255,.05) 8px,
+          rgba(0,0,0,0) 8px,
+          rgba(0,0,0,0) 18px);
+      mix-blend-mode: overlay;
     }
 
     .wrap{
-      position:relative;
-      z-index:1;
-      max-width: 540px;
-      margin:0 auto;
-      padding: 18px 16px calc(28px + env(safe-area-inset-bottom));
+      max-width: 440px;
+      margin: 0 auto;
+      padding: 18px 16px 38px;
     }
 
-    /* Splash (cannot block taps after hidden) */
-    .splash{
-      position:fixed; inset:0;
-      display:grid; place-items:center;
-      background:#000;
-      z-index:9999;
-      transition: opacity .35s ease;
-    }
-    .splash.hidden{
-      opacity:0;
-      pointer-events:none; /* IMPORTANT */
-    }
-    .splash img{
-      width:min(180px, 45vw);
-      border-radius:24px;
-      box-shadow: 0 22px 70px rgba(255,40,40,.16);
-      opacity:.95;
-      transform: translateZ(0);
+    /* Top bar */
+    .topbar{
+      position:sticky;
+      top:0;
+      padding-top: env(safe-area-inset-top);
+      z-index: 20;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      background: linear-gradient(180deg, rgba(0,0,0,.55), rgba(0,0,0,.0));
+      margin: -18px -16px 14px;
+      padding: 10px 16px 12px;
     }
 
-    .hero{
-      display:grid;
-      place-items:center;
-      margin-top: 8px;
-      margin-bottom: 14px;
+    .toprow{
+      display:flex;
+      align-items:center;
+      gap:10px;
     }
-    .heroImg{
-      width: min(360px, 86vw);
-      aspect-ratio: 1 / 1;
-      border-radius: 34px;
-      object-fit: cover;
-      box-shadow: var(--shadow);
-      border: 1px solid rgba(255,255,255,.08);
+
+    .hamburger{
+      width: 44px; height: 44px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      display:flex; align-items:center; justify-content:center;
       cursor:pointer;
-      user-select:none;
-    }
-    .hint{
-      margin-top:10px;
-      font-size:12px;
-      color: rgba(244,246,251,.45);
-      text-align:center;
+      -webkit-tap-highlight-color: transparent;
     }
 
+    .title{
+      flex:1;
+      text-align:center;
+      font-weight: 800;
+      letter-spacing:.10em;
+      font-size: 14px;
+      opacity:.9;
+      transform: translateX(-22px); /* visually center vs hamburger */
+    }
+
+    .pill{
+      font-size: 13px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--muted);
+      white-space:nowrap;
+    }
+
+    /* Cards */
     .card{
-      background: var(--card);
+      background: var(--panel);
       border: 1px solid var(--stroke);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
@@ -117,811 +120,1275 @@
       -webkit-backdrop-filter: blur(14px);
     }
 
+    .logo{
+      display:block;
+      width: 270px;
+      max-width: 85%;
+      margin: 12px auto 14px;
+      border-radius: 26px;
+      box-shadow: 0 22px 60px rgba(0,0,0,.55);
+      border: 1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .logo img{display:block; width:100%; height:auto;}
+
     .mainCard{
-      padding: 18px 18px 16px;
+      padding: 18px 16px 16px;
+      margin-top: 14px;
       text-align:center;
-      margin-bottom: 16px;
+      position:relative;
     }
 
     .label{
-      font-size: 16px;
-      color: rgba(244,246,251,.70);
-      letter-spacing:.3px;
-      margin-bottom: 6px;
-    }
-
-    .bigMiles{
-      font-size: 76px;
-      font-weight: 800;
-      line-height: 1;
-      margin: 2px 0 2px;
-      text-shadow: 0 14px 45px rgba(0,0,0,.6);
-    }
-    .unit{
-      font-size: 18px;
-      color: rgba(244,246,251,.55);
+      font-size: 15px;
+      color: var(--muted);
+      letter-spacing: .02em;
       margin-bottom: 10px;
     }
 
-    /* red glow line (fade out) */
-    .glowLine{
-      height: 6px;
-      margin: 14px 8px 12px;
-      border-radius: 99px;
-      background:
-        radial-gradient(closest-side, rgba(255,40,40,.0), rgba(255,40,40,.0)),
-        linear-gradient(to right,
-          rgba(255,40,40,0) 0%,
-          rgba(255,40,40,.92) 22%,
-          rgba(255,40,40,.92) 78%,
-          rgba(255,40,40,0) 100%
-        );
-      box-shadow:
-        0 0 26px rgba(255,40,40,.32),
-        0 0 55px rgba(255,40,40,.18);
+    .bigMiles{
+      font-size: 64px;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      margin-bottom: 6px;
+    }
+    .unit{
+      font-size: 18px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    /* glowing red line */
+    .glowline{
+      height: 3px;
+      margin: 10px 8px 12px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, transparent, rgba(255,42,42,.25), rgba(255,42,42,1), rgba(255,42,42,.25), transparent);
+      filter: drop-shadow(0 0 14px rgba(255,42,42,.75));
       opacity:.9;
     }
 
     .sub{
-      font-size: 16px;
-      color: rgba(244,246,251,.62);
-      margin-top: 2px;
+      color: var(--muted);
+      font-size: 15px;
+      margin-top: 6px;
     }
-    .sub strong{ color: rgba(244,246,251,.9); }
 
     .grid3{
       display:grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 14px;
+      gap: 10px;
+      margin: 14px 0 14px;
     }
+
     .tile{
-      padding: 14px 12px 14px;
+      padding: 14px 12px 12px;
       text-align:center;
-      background: var(--card2);
-      border: 1px solid var(--stroke);
-      border-radius: 22px;
-      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+      border-radius: 18px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 16px 40px rgba(0,0,0,.38);
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
     }
+
     .tIcon{
-      font-size: 22px;
-      display:inline-block;
-      margin-bottom: 6px;
-      color: var(--red);
-      filter: drop-shadow(0 0 10px rgba(255,40,40,.25));
+      width: 26px; height: 26px;
+      margin: 0 auto 8px;
+      display:flex; align-items:center; justify-content:center;
     }
     .tVal{
-      font-size: 36px;
-      font-weight: 850;
-      line-height:1.05;
-      margin-bottom: 4px;
-    }
-    .tValSmall{
-      font-size: 30px;
-      font-weight: 850;
-      line-height:1.05;
-      margin-bottom: 4px;
+      font-weight: 900;
+      font-size: 28px;
+      letter-spacing:-0.02em;
     }
     .tUnit{
+      margin-top: 4px;
+      color: var(--muted2);
       font-size: 16px;
-      color: rgba(244,246,251,.45);
-      letter-spacing:.2px;
-      text-transform: lowercase;
     }
 
-    .btnMain{
+    /* Buttons */
+    .bigBtn{
       width:100%;
-      border:0;
-      padding: 18px 18px;
-      border-radius: 999px;
-      font-size: 22px;
-      font-weight: 900;
-      letter-spacing:.6px;
-      color: #fff;
-      background: linear-gradient(135deg, var(--red2), var(--red));
-      box-shadow: 0 18px 60px rgba(255,40,40,.22), 0 18px 55px rgba(0,0,0,.55);
+      border:none;
       cursor:pointer;
+      padding: 20px 18px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, var(--red2), var(--red));
+      box-shadow: 0 18px 55px rgba(255,40,40,.25), 0 26px 70px rgba(0,0,0,.55);
+      color:white;
+      font-weight: 900;
+      letter-spacing:.06em;
+      font-size: 18px;
       display:flex;
       align-items:center;
       justify-content:center;
-      gap:12px;
-      margin-bottom: 14px;
+      gap: 10px;
+      -webkit-tap-highlight-color: transparent;
     }
-    .btnMain:active{ transform: translateY(1px); }
+    .bigBtn:active{transform: translateY(1px);}
 
-    .btnRow{
+    .row3{
       display:grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 12px;
+      gap: 10px;
+      margin-top: 12px;
     }
-    .btnChip{
-      border: 1px solid rgba(255,255,255,.09);
-      background: rgba(20,22,26,.45);
-      color: rgba(244,246,251,.95);
-      border-radius: 999px;
-      padding: 12px 10px;
-      font-size: 16px;
-      font-weight: 800;
+
+    .miniBtn{
+      border:none;
       cursor:pointer;
+      padding: 14px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      color: rgba(255,255,255,.85);
+      font-weight: 800;
       display:flex;
       align-items:center;
       justify-content:center;
-      gap:10px;
-      box-shadow: 0 14px 40px rgba(0,0,0,.4);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      user-select:none;
+      gap: 10px;
+      -webkit-tap-highlight-color: transparent;
     }
-    .btnChip:active{ transform: translateY(1px); }
-    .chipIcon{
-      color: var(--red);
-      filter: drop-shadow(0 0 10px rgba(255,40,40,.20));
-      font-size: 18px;
-      line-height:1;
+    .miniBtn:active{transform: translateY(1px);}
+
+    .miniIcon{
+      width: 18px; height: 18px;
+      display:inline-flex; align-items:center; justify-content:center;
     }
 
-    .footer{
+    .hint{
       text-align:center;
-      color: rgba(244,246,251,.45);
+      margin-top: 12px;
+      color: var(--muted2);
       font-size: 14px;
-      margin-top: 6px;
-      margin-bottom: 10px;
     }
 
-    /* Maintenance */
-    .maint{
-      margin-top: 14px;
+    /* Sections */
+    .section{
+      margin-top: 16px;
       padding: 16px;
     }
-    .maintTop{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
+    .secHead{
+      display:flex; align-items:center; justify-content:space-between;
       margin-bottom: 10px;
     }
-    .maintTitle{
-      font-size: 22px;
+    .secTitle{
+      font-size: 28px;
       font-weight: 900;
-      margin:0;
+      letter-spacing:-0.02em;
     }
-    .pill{
-      border:1px solid rgba(255,255,255,.12);
+    .countPill{
       padding: 8px 12px;
       border-radius: 999px;
-      font-size: 13px;
-      color: rgba(244,246,251,.7);
-      background: rgba(0,0,0,.18);
-    }
-    .maintHint{
-      color: rgba(244,246,251,.55);
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      color: var(--muted);
+      font-weight: 800;
       font-size: 14px;
-      margin: 6px 0 14px;
-      line-height:1.35;
     }
-    .maintBtns{
-      display:flex;
-      gap: 12px;
-      flex-wrap:wrap;
+    .secText{
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.35;
       margin-bottom: 12px;
     }
-    .btnSmall{
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(20,22,26,.45);
-      color:#fff;
-      border-radius: 14px;
-      padding: 12px 14px;
-      font-weight: 850;
-      cursor:pointer;
-      box-shadow: 0 14px 40px rgba(0,0,0,.4);
-    }
-    .btnSmall.red{
-      background: linear-gradient(135deg, var(--red2), var(--red));
-      border:0;
-    }
-    .maintList{
-      display:flex;
-      flex-direction:column;
-      gap:10px;
-      margin-top: 6px;
-    }
-    .rem{
-      padding: 12px 12px;
-      border-radius: 16px;
-      background: rgba(0,0,0,.18);
-      border:1px solid rgba(255,255,255,.08);
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
+    .secBtns{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
       gap: 10px;
     }
-    .remLeft{
-      min-width:0;
-    }
-    .remName{
+    .secBtn{
+      border:none; cursor:pointer;
+      padding: 14px 12px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.10);
+      color: rgba(255,255,255,.88);
       font-weight: 900;
-      font-size: 16px;
-      margin:0 0 4px;
     }
-    .remMeta{
-      font-size: 13px;
-      color: rgba(244,246,251,.55);
-      line-height:1.25;
+    .secBtn.red{
+      background: linear-gradient(180deg, var(--red2), var(--red));
+      border: none;
+      color: white;
+      box-shadow: 0 18px 55px rgba(255,40,40,.20);
     }
-    .dueSoon{ color: rgba(255,210,0,.95); }
-    .dueNow{ color: rgba(255,40,40,.95); }
-    .ok{ color: rgba(90,255,170,.9); }
-    .remActions{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      flex-shrink:0;
+
+    /* Drawer */
+    .overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      opacity:0; pointer-events:none;
+      transition: opacity .18s ease;
+      z-index: 50;
     }
-    .mini{
-      padding: 8px 10px;
-      border-radius: 12px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(20,22,26,.40);
-      color:#fff;
-      font-weight: 850;
+    .overlay.show{opacity:1; pointer-events:auto;}
+
+    .drawer{
+      position:fixed;
+      top:0; left:0;
+      height:100%;
+      width: 300px;
+      max-width: 86vw;
+      transform: translateX(-105%);
+      transition: transform .22s ease;
+      z-index: 60;
+      padding-top: env(safe-area-inset-top);
+      background: rgba(10,12,18,.90);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-right: 1px solid rgba(255,255,255,.10);
+      box-shadow: 0 30px 90px rgba(0,0,0,.65);
+    }
+    .drawer.show{transform: translateX(0);}
+
+    .drawerHead{
+      padding: 16px 16px 10px;
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .drawerTitle{
+      font-weight: 900;
+      letter-spacing:.06em;
+      opacity:.9;
+    }
+    .closeBtn{
+      width: 40px; height: 40px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.10);
+      color: rgba(255,255,255,.9);
       cursor:pointer;
-      font-size: 13px;
-      white-space:nowrap;
-    }
-    .mini.red{
-      background: rgba(255,40,40,.16);
-      border:1px solid rgba(255,40,40,.35);
     }
 
-    /* hidden file picker */
-    #photoPicker{ display:none; }
+    .menu{
+      padding: 8px;
+    }
+    .menuItem{
+      display:flex; align-items:center;
+      gap: 12px;
+      padding: 14px 12px;
+      border-radius: 16px;
+      cursor:pointer;
+      color: rgba(255,255,255,.9);
+      background: transparent;
+      border: 1px solid transparent;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .menuItem:hover{background: rgba(255,255,255,.06); border-color: rgba(255,255,255,.08);}
+    .menuItem.active{background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.10);}
+    .menuIcon{width: 20px; height: 20px; display:flex; align-items:center; justify-content:center;}
+    .menuText{font-weight: 900;}
+    .menuSub{color: var(--muted); font-size: 13px; margin-top: 2px; font-weight: 700;}
+    .menuCol{display:flex; flex-direction:column; line-height:1.1;}
 
-    /* Make sure all taps work */
-    button{ touch-action: manipulation; }
+    /* Views */
+    .view{display:none;}
+    .view.show{display:block;}
+
+    /* Inputs / dialogs */
+    .prompt{
+      position:fixed; inset:0;
+      display:none;
+      align-items:flex-end;
+      justify-content:center;
+      z-index: 80;
+      padding: 14px 14px calc(14px + env(safe-area-inset-bottom));
+      background: rgba(0,0,0,.55);
+    }
+    .prompt.show{display:flex;}
+    .promptCard{
+      width: 100%;
+      max-width: 440px;
+      border-radius: 22px;
+      background: rgba(20,22,30,.92);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 30px 90px rgba(0,0,0,.7);
+      padding: 14px;
+    }
+    .promptTop{
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom: 10px;
+    }
+    .promptTitle{font-weight: 900;}
+    .promptClose{
+      width: 40px; height: 40px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.10);
+      color: rgba(255,255,255,.9);
+      cursor:pointer;
+    }
+    .promptRow{display:flex; gap:10px; margin-top: 10px;}
+    input, textarea{
+      width:100%;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px;
+      padding: 12px 12px;
+      color: rgba(255,255,255,.9);
+      font-size: 16px;
+      outline:none;
+    }
+    textarea{min-height: 140px; resize: vertical;}
+    .btn{
+      flex:1;
+      border:none; cursor:pointer;
+      padding: 14px 12px;
+      border-radius: 16px;
+      font-weight: 900;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.10);
+      color: rgba(255,255,255,.9);
+    }
+    .btn.red{
+      background: linear-gradient(180deg, var(--red2), var(--red));
+      border:none;
+      color:white;
+    }
+
+    /* Red SVG icon style */
+    svg.iconRed{stroke: var(--red); fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;}
+    svg.iconFillRed{fill: var(--red);}
+
+    /* Saved Files list */
+    .fileList{margin-top: 10px; display:flex; flex-direction:column; gap:10px;}
+    .fileItem{
+      padding: 12px 12px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      display:flex; justify-content:space-between; gap:10px;
+      align-items:center;
+    }
+    .fileMeta{display:flex; flex-direction:column; gap:4px;}
+    .fileName{font-weight: 900;}
+    .fileSmall{color: var(--muted); font-size: 13px;}
+    .fileActions{display:flex; gap:10px;}
+    .tinyBtn{
+      width: 42px; height: 42px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.10);
+      cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+    }
+
+    /* Toast */
+    .toast{
+      position:fixed;
+      left:50%; transform:translateX(-50%);
+      bottom: calc(18px + env(safe-area-inset-bottom));
+      background: rgba(20,22,30,.95);
+      border: 1px solid rgba(255,255,255,.12);
+      color: rgba(255,255,255,.92);
+      padding: 12px 14px;
+      border-radius: 999px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.65);
+      z-index: 90;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity .18s ease, transform .18s ease;
+    }
+    .toast.show{opacity:1; transform:translateX(-50%) translateY(-2px);}
   </style>
 </head>
 
 <body>
   <div class="texture"></div>
 
-  <!-- splash -->
-  <div class="splash" id="splash">
-    <img src="icon.png" alt="N54">
-  </div>
-
-  <div class="wrap">
-    <div class="hero">
-      <img class="heroImg" id="heroImg" src="icon.png" alt="Tap to change photo" />
-      <div class="hint">Tap image to change (saved on this phone)</div>
-      <input id="photoPicker" type="file" accept="image/*" />
+  <!-- Drawer -->
+  <div class="overlay" id="overlay"></div>
+  <aside class="drawer" id="drawer">
+    <div class="drawerHead">
+      <div class="drawerTitle">N54 MENU</div>
+      <button class="closeBtn" id="closeDrawer" aria-label="Close">✕</button>
     </div>
 
-    <div class="card mainCard">
-      <div class="label">Current Engine Miles</div>
-      <div class="bigMiles" id="engineMiles">0.0</div>
-      <div class="unit">miles</div>
-
-      <div class="glowLine"></div>
-
-      <div class="sub">Trip Miles: <strong id="tripMiles">0.0</strong></div>
-    </div>
-
-    <div class="grid3">
-      <div class="tile">
-        <div class="tIcon">🕒</div>
-        <div class="tVal" id="totalRuntime">00:00:00</div>
-        <div class="tUnit">runtime</div>
-      </div>
-
-      <div class="tile">
-        <div class="tIcon">📍</div>
-        <div class="tValSmall"><span id="totalTracked">0.0</span></div>
-        <div class="tUnit">tracked</div>
-      </div>
-
-      <div class="tile">
-        <div class="tIcon">🏁</div>
-        <div class="tValSmall"><span id="sessionMiles">0.0</span></div>
-        <div class="tUnit">session</div>
-      </div>
-    </div>
-
-    <button class="btnMain" id="btnStart">
-      <span style="font-size:18px;">▶</span>
-      <span id="startLabel">START TRACKING</span>
-    </button>
-
-    <div class="btnRow">
-      <button class="btnChip" id="btnAdjust"><span class="chipIcon">📌</span><span>Adjust</span></button>
-      <button class="btnChip" id="btnAddSub"><span class="chipIcon">➕➖</span><span>Add/Sub</span></button>
-      <button class="btnChip" id="btnClear"><span class="chipIcon">🗑️</span><span>Clear</span></button>
-    </div>
-
-    <div class="footer">Runs on your device • localStorage • no account</div>
-
-    <div class="card maint" id="maintCard">
-      <div class="maintTop">
-        <h3 class="maintTitle">Maintenance Reminders</h3>
-        <div class="pill"><span id="remCount">0</span> items</div>
-      </div>
-
-      <div class="maintHint">
-        No reminders yet. Tap <b>Quick Add N54 Defaults</b> or <b>Add Reminder</b>.
-        <div style="margin-top:6px; opacity:.9;">
-          Tip: <b>Mark Done</b> sets “last done” = your current engine miles.
+    <div class="menu" id="menu">
+      <!-- 5 options -->
+      <div class="menuItem active" data-view="dashboard">
+        <div class="menuIcon">
+          <!-- home -->
+          <svg class="iconRed" width="20" height="20" viewBox="0 0 24 24">
+            <path d="M3 10.5l9-7 9 7"></path>
+            <path d="M6.5 10.5V21h11V10.5"></path>
+          </svg>
+        </div>
+        <div class="menuCol">
+          <div class="menuText">Dashboard</div>
+          <div class="menuSub">Miles + tracking</div>
         </div>
       </div>
 
-      <div class="maintBtns">
-        <button class="btnSmall" id="btnAddReminder">Add Reminder</button>
-        <button class="btnSmall red" id="btnQuickDefaults">Quick Add N54 Defaults</button>
+      <div class="menuItem" data-view="savedfiles">
+        <div class="menuIcon">
+          <!-- folder -->
+          <svg class="iconRed" width="20" height="20" viewBox="0 0 24 24">
+            <path d="M3.5 6.5h6l2 2H20.5v9.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"></path>
+          </svg>
+        </div>
+        <div class="menuCol">
+          <div class="menuText">Saved Files</div>
+          <div class="menuSub">MHD logs + notes</div>
+        </div>
       </div>
 
-      <div class="maintList" id="remList"></div>
+      <div class="menuItem" data-view="maintenance">
+        <div class="menuIcon">
+          <!-- wrench -->
+          <svg class="iconRed" width="20" height="20" viewBox="0 0 24 24">
+            <path d="M21 7.5a5.5 5.5 0 0 1-7.6 5.1l-7 7a2 2 0 0 1-2.8-2.8l7-7A5.5 5.5 0 0 1 16.5 3l-2.2 2.2 2.5 2.5z"></path>
+          </svg>
+        </div>
+        <div class="menuCol">
+          <div class="menuText">Maintenance</div>
+          <div class="menuSub">Reminders</div>
+        </div>
+      </div>
+
+      <div class="menuItem" data-view="snapshots">
+        <div class="menuIcon">
+          <!-- save -->
+          <svg class="iconRed" width="20" height="20" viewBox="0 0 24 24">
+            <path d="M5 4h12l2 2v14H5z"></path>
+            <path d="M8 4v6h8V4"></path>
+          </svg>
+        </div>
+        <div class="menuCol">
+          <div class="menuText">Snapshots</div>
+          <div class="menuSub">Save miles states</div>
+        </div>
+      </div>
+
+      <div class="menuItem" data-view="settings">
+        <div class="menuIcon">
+          <!-- info -->
+          <svg class="iconRed" width="20" height="20" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9"></circle>
+            <path d="M12 10.5v7"></path>
+            <path d="M12 7.5h.01"></path>
+          </svg>
+        </div>
+        <div class="menuCol">
+          <div class="menuText">Settings</div>
+          <div class="menuSub">Coming soon</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="topbar">
+    <div class="toprow">
+      <button class="hamburger" id="openDrawer" aria-label="Menu">
+        <!-- 3 lines -->
+        <svg class="iconRed" width="22" height="22" viewBox="0 0 24 24">
+          <path d="M5 7h14"></path>
+          <path d="M5 12h14"></path>
+          <path d="M5 17h14"></path>
+        </svg>
+      </button>
+
+      <div class="title">N54 MILEAGE TRACKER</div>
+
+      <div class="pill" id="gpsPill">GPS: Stopped</div>
     </div>
   </div>
 
-  <script>
-    (() => {
-      // ---------- storage ----------
-      const KEY = "n54_mileage_app_v3";
-      const HERO_KEY = "n54_mileage_hero_v1";
+  <div class="wrap">
 
-      const defaultState = {
-        engineMiles: 0,
-        tripMiles: 0,
-        totalTracked: 0,
-        totalRuntimeSec: 0,
+    <!-- VIEW: Dashboard -->
+    <div class="view show" id="view-dashboard">
+      <!-- Logo: tap to change -->
+      <div class="logo" id="logoTap" title="Tap to change logo">
+        <img id="logoImg" src="icon.png" alt="N54">
+      </div>
 
-        tracking: false,
-        watchId: null,
-        lastLat: null,
-        lastLon: null,
-        lastTimeMs: null,
-        sessionMiles: 0,
+      <div class="card mainCard">
+        <div class="label">Current Engine Miles</div>
+        <div class="bigMiles" id="engineMiles">0.0</div>
+        <div class="unit">miles</div>
+        <div class="glowline"></div>
+        <div class="sub">Trip Miles: <span id="tripMiles">0.0</span></div>
+      </div>
 
-        reminders: []
-      };
+      <div class="grid3">
+        <div class="tile">
+          <div class="tIcon">
+            <!-- clock -->
+            <svg class="iconRed" width="26" height="26" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="8.5"></circle>
+              <path d="M12 7.5v5l3.2 2"></path>
+            </svg>
+          </div>
+          <div class="tVal" id="totalRuntime">00:00:00</div>
+          <div class="tUnit">runtime</div>
+        </div>
 
-      function load(){
-        try{
-          const raw = localStorage.getItem(KEY);
-          if(!raw) return structuredClone(defaultState);
-          const obj = JSON.parse(raw);
-          return { ...structuredClone(defaultState), ...obj };
-        }catch(e){
-          return structuredClone(defaultState);
+        <div class="tile">
+          <div class="tIcon">
+            <!-- pin -->
+            <svg class="iconRed" width="26" height="26" viewBox="0 0 24 24">
+              <path d="M12 21s7-5.3 7-11a7 7 0 1 0-14 0c0 5.7 7 11 7 11z"></path>
+              <circle cx="12" cy="10" r="2.3"></circle>
+            </svg>
+          </div>
+          <div class="tVal"><span id="totalTracked">0.0</span></div>
+          <div class="tUnit">tracked</div>
+        </div>
+
+        <div class="tile">
+          <div class="tIcon">
+            <!-- gauge -->
+            <svg class="iconRed" width="26" height="26" viewBox="0 0 24 24">
+              <path d="M4 16a8 8 0 0 1 16 0"></path>
+              <path d="M12 12l4.6-2.4"></path>
+            </svg>
+          </div>
+          <div class="tVal"><span id="sessionMiles">0.0</span></div>
+          <div class="tUnit">session</div>
+        </div>
+      </div>
+
+      <button class="bigBtn" id="btnStart">
+        <span style="font-size:18px;">▶</span>
+        <span id="startLabel">START TRACKING</span>
+      </button>
+
+      <div class="row3">
+        <button class="miniBtn" id="btnAdjust">
+          <span class="miniIcon">
+            <!-- pin -->
+            <svg class="iconRed" width="18" height="18" viewBox="0 0 24 24">
+              <path d="M12 21s7-5.3 7-11a7 7 0 1 0-14 0c0 5.7 7 11 7 11z"></path>
+              <circle cx="12" cy="10" r="2.3"></circle>
+            </svg>
+          </span>
+          Adjust
+        </button>
+
+        <button class="miniBtn" id="btnAddSub">
+          <span class="miniIcon">
+            <!-- plus/minus -->
+            <svg class="iconRed" width="18" height="18" viewBox="0 0 24 24">
+              <path d="M6 8h8"></path>
+              <path d="M10 4v8"></path>
+              <path d="M14 16h8"></path>
+            </svg>
+          </span>
+          Add/Sub
+        </button>
+
+        <button class="miniBtn" id="btnClear">
+          <span class="miniIcon">
+            <!-- trash -->
+            <svg class="iconRed" width="18" height="18" viewBox="0 0 24 24">
+              <path d="M4 7h16"></path>
+              <path d="M9 7V5h6v2"></path>
+              <path d="M7 7l1 14h8l1-14"></path>
+            </svg>
+          </span>
+          Clear
+        </button>
+      </div>
+
+      <div class="hint">Runs on your device • localStorage • no account</div>
+
+      <!-- Maintenance stays on dashboard (you like this layout) -->
+      <div class="card section" id="maintenanceSection">
+        <div class="secHead">
+          <div class="secTitle">Maintenance Reminders</div>
+          <div class="countPill"><span id="remCount">0</span> items</div>
+        </div>
+        <div class="secText" id="remEmpty">
+          No reminders yet. Tap “Quick Add N54 Defaults” or “Add Reminder”.
+        </div>
+
+        <div class="secBtns">
+          <button class="secBtn" id="btnAddReminder">Add Reminder</button>
+          <button class="secBtn red" id="btnQuickDefaults">Quick Add N54 Defaults</button>
+        </div>
+
+        <div class="fileList" id="remList" style="margin-top:12px;"></div>
+        <div class="secText" style="margin-top:10px; color: var(--muted2);">
+          Tip: “Mark Done” sets last done = your current engine miles.
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW: Saved Files (NOT on dashboard anymore) -->
+    <div class="view" id="view-savedfiles">
+      <div class="card section">
+        <div class="secHead">
+          <div class="secTitle">Saved Files</div>
+          <div class="countPill"><span id="fileCount">0</span> items</div>
+        </div>
+        <div class="secText">
+          Save MHD logs + notes here. Stored on this phone (offline).
+        </div>
+
+        <div class="secBtns">
+          <button class="secBtn" id="btnPasteLog">Add Log (paste)</button>
+          <button class="secBtn red" id="btnUploadFile">Upload File</button>
+        </div>
+
+        <input id="filePicker" type="file" style="display:none" />
+
+        <div class="fileList" id="savedFileList"></div>
+      </div>
+    </div>
+
+    <!-- VIEW placeholders -->
+    <div class="view" id="view-maintenance">
+      <div class="card section">
+        <div class="secHead">
+          <div class="secTitle">Maintenance</div>
+          <div class="countPill">Menu</div>
+        </div>
+        <div class="secText">Use the Dashboard section for now (same reminders). Later we can move it here.</div>
+      </div>
+    </div>
+
+    <div class="view" id="view-snapshots">
+      <div class="card section">
+        <div class="secHead">
+          <div class="secTitle">Snapshots</div>
+          <div class="countPill">Soon</div>
+        </div>
+        <div class="secText">Placeholder. We can add “Save Miles Snapshot” list here next.</div>
+      </div>
+    </div>
+
+    <div class="view" id="view-settings">
+      <div class="card section">
+        <div class="secHead">
+          <div class="secTitle">Settings</div>
+          <div class="countPill">Soon</div>
+        </div>
+        <div class="secText">Placeholder. Later we’ll add haptics, units, theme, etc.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- prompt modal -->
+  <div class="prompt" id="prompt">
+    <div class="promptCard">
+      <div class="promptTop">
+        <div class="promptTitle" id="promptTitle">Prompt</div>
+        <button class="promptClose" id="promptClose">✕</button>
+      </div>
+      <div id="promptBody"></div>
+      <div class="promptRow" id="promptActions"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Saved</div>
+
+<script>
+(() => {
+  const KEY = "n54_mileage_tracker_v3";
+
+  // state
+  const state = load() || {
+    engineMiles: 0,
+    tripMiles: 0,
+    totalTracked: 0,
+    totalRuntimeSec: 0,
+    tracking: false,
+    lastPos: null,
+    lastTime: null,
+    reminders: [],
+    savedFiles: [], // {id,name,type,addedAt,text?,dataUrl?}
+    logoDataUrl: null
+  };
+
+  // elements
+  const elEngine = $("#engineMiles");
+  const elTrip = $("#tripMiles");
+  const elTotalTracked = $("#totalTracked");
+  const elSession = $("#sessionMiles");
+  const elRuntime = $("#totalRuntime");
+  const elGpsPill = $("#gpsPill");
+  const elStartLabel = $("#startLabel");
+
+  const btnStart = $("#btnStart");
+  const btnAdjust = $("#btnAdjust");
+  const btnAddSub = $("#btnAddSub");
+  const btnClear = $("#btnClear");
+
+  // logo
+  const logoTap = $("#logoTap");
+  const logoImg = $("#logoImg");
+
+  // drawer
+  const openDrawer = $("#openDrawer");
+  const closeDrawer = $("#closeDrawer");
+  const overlay = $("#overlay");
+  const drawer = $("#drawer");
+
+  // views/menu
+  const menu = $("#menu");
+  const views = {
+    dashboard: $("#view-dashboard"),
+    savedfiles: $("#view-savedfiles"),
+    maintenance: $("#view-maintenance"),
+    snapshots: $("#view-snapshots"),
+    settings: $("#view-settings")
+  };
+
+  // maintenance
+  const btnAddReminder = $("#btnAddReminder");
+  const btnQuickDefaults = $("#btnQuickDefaults");
+  const remList = $("#remList");
+  const remCount = $("#remCount");
+  const remEmpty = $("#remEmpty");
+
+  // saved files
+  const fileCount = $("#fileCount");
+  const savedFileList = $("#savedFileList");
+  const btnPasteLog = $("#btnPasteLog");
+  const btnUploadFile = $("#btnUploadFile");
+  const filePicker = $("#filePicker");
+
+  // prompt + toast
+  const prompt = $("#prompt");
+  const promptTitle = $("#promptTitle");
+  const promptBody = $("#promptBody");
+  const promptActions = $("#promptActions");
+  const promptClose = $("#promptClose");
+  const toast = $("#toast");
+
+  // init
+  applyLogo();
+  render();
+  renderReminders();
+  renderFiles();
+
+  // drawer events
+  openDrawer.addEventListener("click", () => setDrawer(true));
+  closeDrawer.addEventListener("click", () => setDrawer(false));
+  overlay.addEventListener("click", () => setDrawer(false));
+
+  menu.addEventListener("click", (e) => {
+    const item = e.target.closest(".menuItem");
+    if(!item) return;
+    const view = item.dataset.view;
+    // active styles
+    $all(".menuItem", menu).forEach(x => x.classList.toggle("active", x === item));
+    // show view
+    Object.entries(views).forEach(([k, el]) => el.classList.toggle("show", k === view));
+    setDrawer(false);
+
+    // placeholders
+    if(view !== "dashboard" && view !== "savedfiles" && view !== "maintenance"){
+      showToast("Coming soon");
+    }
+  });
+
+  function setDrawer(open){
+    drawer.classList.toggle("show", open);
+    overlay.classList.toggle("show", open);
+  }
+
+  // logo tap -> choose picture
+  logoTap.addEventListener("click", async () => {
+    const ok = await confirmPrompt("Change logo image?", "Pick any photo — this only changes the in-app logo (not the home screen icon).");
+    if(!ok) return;
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = async () => {
+      const file = input.files?.[0];
+      if(!file) return;
+      const dataUrl = await fileToDataUrl(file);
+      state.logoDataUrl = dataUrl;
+      save(state);
+      applyLogo();
+      showToast("Logo updated");
+    };
+    input.click();
+  });
+
+  function applyLogo(){
+    logoImg.src = state.logoDataUrl || "icon.png";
+  }
+
+  // tracking
+  btnStart.addEventListener("click", async () => {
+    if(!state.tracking){
+      // request permission
+      try{
+        await getOnePosition();
+      }catch(err){
+        showToast("Location blocked");
+        return;
+      }
+      state.tracking = true;
+      state.lastPos = null;
+      state.lastTime = Date.now();
+      elGpsPill.textContent = "GPS: Running";
+      elStartLabel.textContent = "STOP TRACKING";
+      save(state);
+      showToast("Tracking started");
+    }else{
+      state.tracking = false;
+      state.lastPos = null;
+      state.lastTime = null;
+      elGpsPill.textContent = "GPS: Stopped";
+      elStartLabel.textContent = "START TRACKING";
+      save(state);
+      showToast("Tracking stopped");
+    }
+    render();
+  });
+
+  // adjust miles (set)
+  btnAdjust.addEventListener("click", async () => {
+    const val = await numberPrompt("Set Engine Miles", "Enter the current engine miles:", state.engineMiles);
+    if(val === null) return;
+    state.engineMiles = clamp(val, 0);
+    save(state);
+    render();
+    showToast("Miles set");
+  });
+
+  // add/sub miles
+  btnAddSub.addEventListener("click", async () => {
+    const val = await numberPrompt("Add/Subtract Miles", "Enter miles to add (use negative to subtract):", 0);
+    if(val === null) return;
+    state.engineMiles = clamp(state.engineMiles + val, 0);
+    save(state);
+    render();
+    showToast("Updated");
+  });
+
+  // clear
+  btnClear.addEventListener("click", async () => {
+    const ok = await confirmPrompt("Clear all data?", "This wipes miles, trip, reminders, and saved files.");
+    if(!ok) return;
+    localStorage.removeItem(KEY);
+    location.reload();
+  });
+
+  // maintenance reminders
+  btnAddReminder.addEventListener("click", async () => {
+    const name = await textPrompt("Add Reminder", "Reminder name (e.g., Oil change):", "");
+    if(!name) return;
+    const interval = await numberPrompt("Interval (miles)", "How many miles between services?", 3000);
+    if(interval === null) return;
+
+    state.reminders.push({
+      id: uid(),
+      name,
+      intervalMiles: Math.max(1, interval),
+      lastDoneMiles: state.engineMiles || 0,
+      createdAt: Date.now()
+    });
+    save(state);
+    renderReminders();
+    showToast("Reminder added");
+  });
+
+  btnQuickDefaults.addEventListener("click", async () => {
+    const ok = await confirmPrompt("Add N54 defaults?", "Adds common reminders (you can edit later).");
+    if(!ok) return;
+    const defaults = [
+      ["Oil change", 3000],
+      ["Spark plugs", 15000],
+      ["Transmission fluid", 50000],
+      ["Coolant flush", 50000],
+      ["Walnut blast", 45000]
+    ];
+    defaults.forEach(([name, interval]) => {
+      // avoid duplicates
+      if(state.reminders.some(r => r.name.toLowerCase() === name.toLowerCase())) return;
+      state.reminders.push({id: uid(), name, intervalMiles: interval, lastDoneMiles: state.engineMiles || 0, createdAt: Date.now()});
+    });
+    save(state);
+    renderReminders();
+    showToast("Defaults added");
+  });
+
+  function renderReminders(){
+    remList.innerHTML = "";
+    remCount.textContent = state.reminders.length;
+
+    if(state.reminders.length === 0){
+      remEmpty.style.display = "block";
+      return;
+    }
+    remEmpty.style.display = "none";
+
+    state.reminders.forEach(rem => {
+      const dueAt = rem.lastDoneMiles + rem.intervalMiles;
+      const remaining = dueAt - state.engineMiles;
+      const status = remaining <= 0 ? `DUE (${Math.abs(remaining).toFixed(0)} mi overdue)` : `${remaining.toFixed(0)} mi left`;
+
+      const row = document.createElement("div");
+      row.className = "fileItem";
+      row.innerHTML = `
+        <div class="fileMeta">
+          <div class="fileName">${escapeHtml(rem.name)}</div>
+          <div class="fileSmall">Every ${rem.intervalMiles} mi • Last done ${rem.lastDoneMiles.toFixed(0)} • <span style="color:${remaining<=0?'var(--red)':'rgba(255,255,255,.65)'}">${status}</span></div>
+        </div>
+        <div class="fileActions">
+          <button class="tinyBtn" title="Mark Done" data-act="done">
+            <svg class="iconRed" width="18" height="18" viewBox="0 0 24 24">
+              <path d="M5 12l4 4L19 6"></path>
+            </svg>
+          </button>
+          <button class="tinyBtn" title="Delete" data-act="del">
+            <svg class="iconRed" width="18" height="18" viewBox="0 0 24 24">
+              <path d="M4 7h16"></path>
+              <path d="M9 7V5h6v2"></path>
+              <path d="M7 7l1 14h8l1-14"></path>
+            </svg>
+          </button>
+        </div>
+      `;
+      row.addEventListener("click", async (e) => {
+        const b = e.target.closest("button");
+        if(!b) return;
+        const act = b.dataset.act;
+        if(act === "done"){
+          rem.lastDoneMiles = state.engineMiles;
+          save(state);
+          renderReminders();
+          showToast("Marked done");
         }
-      }
-      function save(){
-        localStorage.setItem(KEY, JSON.stringify(state));
-      }
-
-      let state = load();
-
-      // ---------- elements ----------
-      const elMiles = document.getElementById("engineMiles");
-      const elTrip = document.getElementById("tripMiles");
-      const elRuntime = document.getElementById("totalRuntime");
-      const elTotalTracked = document.getElementById("totalTracked");
-      const elSession = document.getElementById("sessionMiles");
-      const btnStart = document.getElementById("btnStart");
-      const startLabel = document.getElementById("startLabel");
-      const btnAdjust = document.getElementById("btnAdjust");
-      const btnAddSub = document.getElementById("btnAddSub");
-      const btnClear = document.getElementById("btnClear");
-
-      const splash = document.getElementById("splash");
-
-      const heroImg = document.getElementById("heroImg");
-      const photoPicker = document.getElementById("photoPicker");
-
-      const btnAddReminder = document.getElementById("btnAddReminder");
-      const btnQuickDefaults = document.getElementById("btnQuickDefaults");
-      const remList = document.getElementById("remList");
-      const remCount = document.getElementById("remCount");
-
-      // ---------- helpers ----------
-      function haptic(ms=18){
-        try{
-          if(navigator.vibrate) navigator.vibrate(ms);
-        }catch(e){}
-      }
-
-      function fmtMiles(x){
-        const n = Number(x) || 0;
-        return n.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 });
-      }
-
-      function fmtSmallMiles(x){
-        const n = Number(x) || 0;
-        return n.toLocaleString(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 });
-      }
-
-      function fmtTime(sec){
-        sec = Math.max(0, Math.floor(sec || 0));
-        const h = String(Math.floor(sec/3600)).padStart(2,"0");
-        const m = String(Math.floor((sec%3600)/60)).padStart(2,"0");
-        const s = String(sec%60).padStart(2,"0");
-        return `${h}:${m}:${s}`;
-      }
-
-      function haversineMiles(lat1, lon1, lat2, lon2){
-        const R = 3958.7613; // miles
-        const toRad = d => d * Math.PI / 180;
-        const dLat = toRad(lat2-lat1);
-        const dLon = toRad(lon2-lon1);
-        const a = Math.sin(dLat/2)**2 +
-                  Math.cos(toRad(lat1))*Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
-        return 2 * R * Math.asin(Math.min(1, Math.sqrt(a)));
-      }
-
-      function render(){
-        elMiles.textContent = fmtMiles(state.engineMiles);
-        elTrip.textContent = fmtSmallMiles(state.tripMiles);
-        elRuntime.textContent = fmtTime(state.totalRuntimeSec);
-        elTotalTracked.textContent = fmtSmallMiles(state.totalTracked);
-        elSession.textContent = fmtSmallMiles(state.sessionMiles);
-
-        startLabel.textContent = state.tracking ? "STOP TRACKING" : "START TRACKING";
-
-        renderReminders();
-      }
-
-      // ---------- hero photo ----------
-      function loadHero(){
-        const saved = localStorage.getItem(HERO_KEY);
-        if(saved) heroImg.src = saved;
-        else heroImg.src = "icon.png";
-      }
-
-      heroImg.addEventListener("click", () => {
-        haptic(12);
-        photoPicker.click();
-      });
-
-      photoPicker.addEventListener("change", async (e) => {
-        const file = e.target.files && e.target.files[0];
-        if(!file) return;
-        const reader = new FileReader();
-        reader.onload = () => {
-          const dataUrl = reader.result;
-          try{
-            localStorage.setItem(HERO_KEY, dataUrl);
-            heroImg.src = dataUrl;
-            haptic(18);
-          }catch(err){
-            alert("Image too large to save. Try a smaller image.");
-          }
-        };
-        reader.readAsDataURL(file);
-      });
-
-      // ---------- tracking ----------
-      let runtimeTimer = null;
-
-      function startRuntimeTimer(){
-        stopRuntimeTimer();
-        runtimeTimer = setInterval(() => {
-          if(!state.tracking) return;
-          state.totalRuntimeSec += 1;
-          save();
-          elRuntime.textContent = fmtTime(state.totalRuntimeSec);
-        }, 1000);
-      }
-      function stopRuntimeTimer(){
-        if(runtimeTimer){ clearInterval(runtimeTimer); runtimeTimer = null; }
-      }
-
-      function startTracking(){
-        if(!navigator.geolocation){
-          alert("GPS not supported on this device.");
-          return;
+        if(act === "del"){
+          const ok = await confirmPrompt("Delete reminder?", rem.name);
+          if(!ok) return;
+          state.reminders = state.reminders.filter(x => x.id !== rem.id);
+          save(state);
+          renderReminders();
+          showToast("Deleted");
         }
+      });
+      remList.appendChild(row);
+    });
+  }
 
-        state.tracking = true;
-        state.tripMiles = 0;
-        state.sessionMiles = 0;
-        state.lastLat = null;
-        state.lastLon = null;
-        state.lastTimeMs = null;
+  // saved files (in menu)
+  btnPasteLog.addEventListener("click", async () => {
+    const name = await textPrompt("Log name", "Example: MHD log 2026-01-26", "MHD log");
+    if(!name) return;
+    const text = await longTextPrompt("Paste log / notes", "Paste your MHD log text here:", "");
+    if(!text) return;
+    state.savedFiles.unshift({
+      id: uid(),
+      name,
+      type: "text",
+      addedAt: Date.now(),
+      text
+    });
+    save(state);
+    renderFiles();
+    showToast("Saved");
+  });
 
-        save();
-        render();
+  btnUploadFile.addEventListener("click", () => filePicker.click());
+  filePicker.addEventListener("change", async () => {
+    const file = filePicker.files?.[0];
+    filePicker.value = "";
+    if(!file) return;
 
-        startRuntimeTimer();
+    // For offline storage, keep it simple:
+    // - text/* and .csv -> store as text
+    // - others -> store as dataURL (base64) (works, but large files may be too big)
+    let entry = { id: uid(), name: file.name, addedAt: Date.now() };
 
-        state.watchId = navigator.geolocation.watchPosition(
-          (pos) => {
-            const lat = pos.coords.latitude;
-            const lon = pos.coords.longitude;
+    if(file.type.startsWith("text/") || file.name.toLowerCase().endsWith(".csv") || file.name.toLowerCase().endsWith(".log")){
+      entry.type = "text";
+      entry.text = await file.text();
+    }else{
+      entry.type = "dataurl";
+      entry.dataUrl = await fileToDataUrl(file);
+    }
 
-            if(state.lastLat == null || state.lastLon == null){
-              state.lastLat = lat;
-              state.lastLon = lon;
-              state.lastTimeMs = Date.now();
-              save();
-              return;
+    state.savedFiles.unshift(entry);
+    save(state);
+    renderFiles();
+    showToast("Uploaded");
+  });
+
+  function renderFiles(){
+    savedFileList.innerHTML = "";
+    fileCount.textContent = state.savedFiles.length;
+
+    if(state.savedFiles.length === 0){
+      const empty = document.createElement("div");
+      empty.className = "secText";
+      empty.style.marginTop = "10px";
+      empty.textContent = "No files yet.";
+      savedFileList.appendChild(empty);
+      return;
+    }
+
+    state.savedFiles.forEach(f => {
+      const row = document.createElement("div");
+      row.className = "fileItem";
+      const when = new Date(f.addedAt).toLocaleString();
+      row.innerHTML = `
+        <div class="fileMeta">
+          <div class="fileName">${escapeHtml(f.name)}</div>
+          <div class="fileSmall">${f.type.toUpperCase()} • ${when}</div>
+        </div>
+        <div class="fileActions">
+          <button class="tinyBtn" title="View" data-act="view">
+            <svg class="iconRed" width="18" height="18" viewBox="0 0 24 24">
+              <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7z"></path>
+              <circle cx="12" cy="12" r="2.5"></circle>
+            </svg>
+          </button>
+          <button class="tinyBtn" title="Delete" data-act="del">
+            <svg class="iconRed" width="18" height="18" viewBox="0 0 24 24">
+              <path d="M4 7h16"></path>
+              <path d="M9 7V5h6v2"></path>
+              <path d="M7 7l1 14h8l1-14"></path>
+            </svg>
+          </button>
+        </div>
+      `;
+      row.addEventListener("click", async (e) => {
+        const b = e.target.closest("button");
+        if(!b) return;
+        const act = b.dataset.act;
+
+        if(act === "view"){
+          if(f.type === "text"){
+            await longTextPrompt("View file", f.name, f.text || "");
+          }else{
+            // dataurl: open in new tab
+            const w = window.open();
+            if(w){
+              w.document.write(`<iframe src="${f.dataUrl}" style="border:0;width:100%;height:100%"></iframe>`);
+            }else{
+              showToast("Popups blocked");
             }
-
-            const d = haversineMiles(state.lastLat, state.lastLon, lat, lon);
-
-            // reject crazy jumps (GPS spikes)
-            if(d < 0.001 || d > 1.5){
-              state.lastLat = lat;
-              state.lastLon = lon;
-              state.lastTimeMs = Date.now();
-              save();
-              return;
-            }
-
-            state.tripMiles += d;
-            state.sessionMiles += d;
-            state.totalTracked += d;
-            state.engineMiles += d;
-
-            state.lastLat = lat;
-            state.lastLon = lon;
-            state.lastTimeMs = Date.now();
-
-            save();
-
-            // update UI fast
-            elTrip.textContent = fmtSmallMiles(state.tripMiles);
-            elSession.textContent = fmtSmallMiles(state.sessionMiles);
-            elTotalTracked.textContent = fmtSmallMiles(state.totalTracked);
-            elMiles.textContent = fmtMiles(state.engineMiles);
-          },
-          (err) => {
-            alert("GPS error: " + err.message + "\n\nMake sure Location is allowed for Safari.");
-            stopTracking();
-          },
-          {
-            enableHighAccuracy: true,
-            maximumAge: 1000,
-            timeout: 15000
           }
-        );
-
-        save();
-      }
-
-      function stopTracking(){
-        state.tracking = false;
-
-        if(state.watchId != null){
-          try{ navigator.geolocation.clearWatch(state.watchId); }catch(e){}
-          state.watchId = null;
         }
 
-        stopRuntimeTimer();
-
-        save();
-        render();
-      }
-
-      // ---------- buttons ----------
-      btnStart.addEventListener("click", () => {
-        haptic(18);
-        if(state.tracking) stopTracking();
-        else startTracking();
+        if(act === "del"){
+          const ok = await confirmPrompt("Delete file?", f.name);
+          if(!ok) return;
+          state.savedFiles = state.savedFiles.filter(x => x.id !== f.id);
+          save(state);
+          renderFiles();
+          showToast("Deleted");
+        }
       });
 
-      btnAdjust.addEventListener("click", () => {
-        haptic(14);
-        const cur = Number(state.engineMiles || 0);
-        const input = prompt("Set current engine miles to:", String(cur.toFixed(1)));
-        if(input == null) return;
+      savedFileList.appendChild(row);
+    });
+  }
 
-        const v = Number(String(input).replace(/,/g,""));
-        if(!Number.isFinite(v) || v < 0){
-          alert("Enter a valid number.");
-          return;
-        }
+  // runtime tick
+  setInterval(() => {
+    if(state.tracking){
+      state.totalRuntimeSec += 1;
+      save(state);
+      renderRuntime();
+    }
+  }, 1000);
 
-        state.engineMiles = v;
-        save();
-        render();
-      });
-
-      btnAddSub.addEventListener("click", () => {
-        haptic(14);
-        const input = prompt("Add or subtract miles (example: 25 or -10):", "0");
-        if(input == null) return;
-
-        const delta = Number(String(input).replace(/,/g,""));
-        if(!Number.isFinite(delta)){
-          alert("Enter a valid number.");
-          return;
-        }
-
-        state.engineMiles = Math.max(0, (Number(state.engineMiles) || 0) + delta);
-        save();
-        render();
-      });
-
-      btnClear.addEventListener("click", () => {
-        haptic(20);
-        if(!confirm("Clear ALL data on this phone?\n\nThis cannot be undone.")) return;
-
-        // keep hero image
-        const hero = localStorage.getItem(HERO_KEY);
-
-        state = structuredClone(defaultState);
-        save();
-
-        if(hero) localStorage.setItem(HERO_KEY, hero);
-        loadHero();
-        render();
-      });
-
-      // ---------- maintenance reminders ----------
-      function computeDue(rem){
-        const nowMiles = Number(state.engineMiles || 0);
-        const last = Number(rem.lastDoneMiles ?? 0);
-        const interval = Number(rem.intervalMiles ?? 0);
-        const dueAt = last + interval;
-        const remaining = dueAt - nowMiles;
-
-        let status = "ok";
-        let label = `Due at ${fmtSmallMiles(dueAt)} mi • ${fmtSmallMiles(Math.max(0, remaining))} mi remaining`;
-
-        if(remaining <= 0){
-          status = "dueNow";
-          label = `DUE NOW • due at ${fmtSmallMiles(dueAt)} mi`;
-        }else if(remaining <= Math.max(50, interval * 0.10)){
-          status = "dueSoon";
-          label = `Due soon • due at ${fmtSmallMiles(dueAt)} mi • ${fmtSmallMiles(remaining)} mi left`;
-        }
-
-        return { dueAt, remaining, status, label };
-      }
-
-      function renderReminders(){
-        const arr = Array.isArray(state.reminders) ? state.reminders : [];
-        remCount.textContent = String(arr.length);
-        remList.innerHTML = "";
-
-        if(arr.length === 0){
-          return;
-        }
-
-        // Sort: due now, due soon, ok
-        const ranked = arr
-          .map(r => ({ r, c: computeDue(r) }))
-          .sort((a,b) => a.c.remaining - b.c.remaining);
-
-        for(const item of ranked){
-          const r = item.r;
-          const c = item.c;
-
-          const div = document.createElement("div");
-          div.className = "rem";
-
-          const left = document.createElement("div");
-          left.className = "remLeft";
-
-          const name = document.createElement("div");
-          name.className = "remName";
-          name.textContent = r.name || "Reminder";
-
-          const meta = document.createElement("div");
-          meta.className = "remMeta " + (c.status === "dueNow" ? "dueNow" : c.status === "dueSoon" ? "dueSoon" : "ok");
-          meta.textContent = c.label;
-
-          left.appendChild(name);
-          left.appendChild(meta);
-
-          const actions = document.createElement("div");
-          actions.className = "remActions";
-
-          const done = document.createElement("button");
-          done.className = "mini red";
-          done.textContent = "Mark Done";
-          done.addEventListener("click", () => {
-            haptic(16);
-            r.lastDoneMiles = Number(state.engineMiles || 0);
-            save();
-            render();
-          });
-
-          const del = document.createElement("button");
-          del.className = "mini";
-          del.textContent = "Delete";
-          del.addEventListener("click", () => {
-            haptic(12);
-            if(!confirm(`Delete reminder: ${r.name}?`)) return;
-            state.reminders = state.reminders.filter(x => x.id !== r.id);
-            save();
-            render();
-          });
-
-          actions.appendChild(done);
-          actions.appendChild(del);
-
-          div.appendChild(left);
-          div.appendChild(actions);
-
-          remList.appendChild(div);
-        }
-      }
-
-      function addReminder(name, intervalMiles){
-        const id = Math.random().toString(36).slice(2) + Date.now().toString(36);
-        const nowMiles = Number(state.engineMiles || 0);
-
-        state.reminders.push({
-          id,
-          name,
-          intervalMiles: Number(intervalMiles || 0),
-          lastDoneMiles: nowMiles
-        });
-
-        save();
-        render();
-      }
-
-      btnAddReminder.addEventListener("click", () => {
-        haptic(14);
-        const name = prompt("Reminder name (ex: Oil Change):", "Oil Change");
-        if(name == null || !name.trim()) return;
-
-        const interval = prompt("Interval in miles (ex: 3000):", "3000");
-        if(interval == null) return;
-
-        const v = Number(String(interval).replace(/,/g,""));
-        if(!Number.isFinite(v) || v <= 0){
-          alert("Enter a valid interval miles.");
-          return;
-        }
-
-        addReminder(name.trim(), v);
-      });
-
-      btnQuickDefaults.addEventListener("click", () => {
-        haptic(18);
-        if(!confirm("Add common N54 defaults?\n\nOil 3000\nSpark Plugs 15000\nWalnut Blast 50000\nCoolant 30000\nTrans Fluid 60000")) return;
-
-        // Avoid duplicates by name
-        const names = new Set((state.reminders||[]).map(r => (r.name||"").toLowerCase()));
-        const defaults = [
-          ["Oil Change", 3000],
-          ["Spark Plugs", 15000],
-          ["Walnut Blast", 50000],
-          ["Coolant Flush", 30000],
-          ["Trans Fluid", 60000]
-        ];
-
-        for(const [n,i] of defaults){
-          if(!names.has(n.toLowerCase())) addReminder(n, i);
-        }
-
-        save();
-        render();
-      });
-
-      // ---------- boot ----------
-      function boot(){
-        // splash hide (never blocks taps)
-        setTimeout(() => splash.classList.add("hidden"), 650);
-
-        loadHero();
-        render();
-
-        // if tracking was left on (rare), stop it
-        if(state.tracking){
-          state.tracking = false;
-          state.watchId = null;
-          save();
+  // gps loop
+  setInterval(async () => {
+    if(!state.tracking) return;
+    try{
+      const pos = await getOnePosition({enableHighAccuracy:true, timeout:8000, maximumAge:0});
+      const now = Date.now();
+      if(state.lastPos){
+        const d = haversineMiles(state.lastPos.coords.latitude, state.lastPos.coords.longitude,
+                                 pos.coords.latitude, pos.coords.longitude);
+        // basic sanity filter
+        if(d < 2.0){ // ignore crazy jumps
+          state.tripMiles += d;
+          state.totalTracked += d;
+          state.engineMiles += d; // auto-add to engine miles
+          save(state);
           render();
         }
       }
+      state.lastPos = pos;
+      state.lastTime = now;
+      elGpsPill.textContent = "GPS: Running";
+    }catch(e){
+      elGpsPill.textContent = "GPS: Weak";
+    }
+  }, 4000);
 
-      window.addEventListener("load", boot);
-    })();
-  </script>
+  function render(){
+    elEngine.textContent = fmt1(state.engineMiles);
+    elTrip.textContent = fmt1(state.tripMiles);
+    elTotalTracked.textContent = fmt1(state.totalTracked);
+    elSession.textContent = fmt1(state.tripMiles);
+    renderRuntime();
+
+    if(state.tracking){
+      elStartLabel.textContent = "STOP TRACKING";
+      elGpsPill.textContent = "GPS: Running";
+    }else{
+      elStartLabel.textContent = "START TRACKING";
+      elGpsPill.textContent = "GPS: Stopped";
+    }
+  }
+
+  function renderRuntime(){
+    elRuntime.textContent = hhmmss(state.totalRuntimeSec);
+  }
+
+  // prompt helpers
+  promptClose.addEventListener("click", () => hidePrompt());
+  function hidePrompt(){ prompt.classList.remove("show"); }
+
+  function showPrompt(title, bodyEl, actions){
+    promptTitle.textContent = title;
+    promptBody.innerHTML = "";
+    promptBody.appendChild(bodyEl);
+    promptActions.innerHTML = "";
+    actions.forEach(a => promptActions.appendChild(a));
+    prompt.classList.add("show");
+  }
+
+  function confirmPrompt(title, msg){
+    return new Promise(resolve => {
+      const body = document.createElement("div");
+      body.style.color = "rgba(255,255,255,.75)";
+      body.style.lineHeight = "1.35";
+      body.textContent = msg;
+
+      const cancel = mkBtn("Cancel", false, () => { hidePrompt(); resolve(false); });
+      const ok = mkBtn("OK", true, () => { hidePrompt(); resolve(true); });
+
+      showPrompt(title, body, [cancel, ok]);
+    });
+  }
+
+  function textPrompt(title, msg, defaultVal){
+    return new Promise(resolve => {
+      const body = document.createElement("div");
+      body.innerHTML = `<div style="color:rgba(255,255,255,.75);margin-bottom:10px;">${escapeHtml(msg)}</div>`;
+      const inp = document.createElement("input");
+      inp.value = defaultVal || "";
+      body.appendChild(inp);
+
+      const cancel = mkBtn("Cancel", false, () => { hidePrompt(); resolve(null); });
+      const ok = mkBtn("Save", true, () => { hidePrompt(); resolve(inp.value.trim() || null); });
+
+      showPrompt(title, body, [cancel, ok]);
+      setTimeout(() => inp.focus(), 60);
+    });
+  }
+
+  function longTextPrompt(title, msg, defaultVal){
+    return new Promise(resolve => {
+      const body = document.createElement("div");
+      body.innerHTML = `<div style="color:rgba(255,255,255,.75);margin-bottom:10px;">${escapeHtml(msg)}</div>`;
+      const ta = document.createElement("textarea");
+      ta.value = defaultVal || "";
+      body.appendChild(ta);
+
+      const close = mkBtn("Close", false, () => { hidePrompt(); resolve(null); });
+      const ok = mkBtn("Save", true, () => { hidePrompt(); resolve(ta.value.trim() || null); });
+
+      showPrompt(title, body, [close, ok]);
+      setTimeout(() => ta.focus(), 60);
+    });
+  }
+
+  function numberPrompt(title, msg, defaultVal){
+    return new Promise(resolve => {
+      const body = document.createElement("div");
+      body.innerHTML = `<div style="color:rgba(255,255,255,.75);margin-bottom:10px;">${escapeHtml(msg)}</div>`;
+      const inp = document.createElement("input");
+      inp.type = "number";
+      inp.step = "0.1";
+      inp.value = (defaultVal ?? 0);
+      body.appendChild(inp);
+
+      const cancel = mkBtn("Cancel", false, () => { hidePrompt(); resolve(null); });
+      const ok = mkBtn("Save", true, () => {
+        const v = parseFloat(inp.value);
+        hidePrompt();
+        resolve(isFinite(v) ? v : null);
+      });
+
+      showPrompt(title, body, [cancel, ok]);
+      setTimeout(() => inp.focus(), 60);
+    });
+  }
+
+  function mkBtn(text, isRed, onClick){
+    const b = document.createElement("button");
+    b.className = "btn" + (isRed ? " red" : "");
+    b.textContent = text;
+    b.addEventListener("click", onClick);
+    return b;
+  }
+
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add("show");
+    setTimeout(() => toast.classList.remove("show"), 1100);
+  }
+
+  // helpers
+  function $(sel){ return document.querySelector(sel); }
+  function $all(sel, root=document){ return [...root.querySelectorAll(sel)]; }
+
+  function save(obj){ localStorage.setItem(KEY, JSON.stringify(obj)); }
+  function load(){ try{ return JSON.parse(localStorage.getItem(KEY)); }catch(e){ return null; } }
+
+  function fmt1(n){ return (Math.round(n*10)/10).toFixed(1); }
+  function clamp(n,min){ return n < min ? min : n; }
+  function hhmmss(s){
+    s = Math.max(0, Math.floor(s));
+    const h = String(Math.floor(s/3600)).padStart(2,"0");
+    const m = String(Math.floor((s%3600)/60)).padStart(2,"0");
+    const x = String(s%60).padStart(2,"0");
+    return `${h}:${m}:${x}`;
+  }
+
+  function uid(){ return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+
+  function escapeHtml(str){
+    return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  function fileToDataUrl(file){
+    return new Promise((res, rej) => {
+      const fr = new FileReader();
+      fr.onload = () => res(fr.result);
+      fr.onerror = rej;
+      fr.readAsDataURL(file);
+    });
+  }
+
+  function getOnePosition(opts){
+    return new Promise((resolve, reject) => {
+      if(!navigator.geolocation) return reject(new Error("no geo"));
+      navigator.geolocation.getCurrentPosition(resolve, reject, opts || {enableHighAccuracy:true, timeout:8000, maximumAge:0});
+    });
+  }
+
+  function haversineMiles(lat1, lon1, lat2, lon2){
+    const R = 3958.7613; // miles
+    const toRad = d => d * Math.PI / 180;
+    const dLat = toRad(lat2-lat1);
+    const dLon = toRad(lon2-lon1);
+    const a =
+      Math.sin(dLat/2)*Math.sin(dLat/2) +
+      Math.cos(toRad(lat1))*Math.cos(toRad(lat2)) *
+      Math.sin(dLon/2)*Math.sin(dLon/2);
+    const c = 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R*c;
+  }
+})();
+</script>
 </body>
 </html>
