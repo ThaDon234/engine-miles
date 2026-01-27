@@ -494,6 +494,18 @@
       transition: opacity .18s ease, transform .18s ease;
     }
     .toast.show{opacity:1; transform:translateX(-50%) translateY(-2px);}
+ /* === iOS PWA SAFE-AREA FIX (MENU ONLY) === */
+:root{
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+
+button,
+.menuBtn,
+.hamburger,
+.openBtn,
+header button {
+  margin-top: var(--safe-top);
+}
   </style>
 </head>
 
