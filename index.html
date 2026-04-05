@@ -4,10 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>N54 Mileage Tracker</title>
-<link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="manifest.json">
+
   <!-- PWA / iOS -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#07080b">
   <link rel="apple-touch-icon" href="icon.png">
   <link rel="icon" type="image/png" href="icon.png">
 
@@ -494,18 +496,19 @@
       transition: opacity .18s ease, transform .18s ease;
     }
     .toast.show{opacity:1; transform:translateX(-50%) translateY(-2px);}
- /* === iOS PWA SAFE-AREA FIX (MENU ONLY) === */
-:root{
-  --safe-top: env(safe-area-inset-top, 0px);
-}
 
-button,
-.menuBtn,
-.hamburger,
-.openBtn,
-header button {
-  margin-top: var(--safe-top);
-}
+    /* === iOS PWA SAFE-AREA FIX (MENU ONLY) === */
+    :root{
+      --safe-top: env(safe-area-inset-top, 0px);
+    }
+
+    button,
+    .menuBtn,
+    .hamburger,
+    .openBtn,
+    header button {
+      margin-top: var(--safe-top);
+    }
   </style>
 </head>
 
@@ -521,10 +524,8 @@ header button {
     </div>
 
     <div class="menu" id="menu">
-      <!-- 5 options -->
       <div class="menuItem active" data-view="dashboard">
         <div class="menuIcon">
-          <!-- home -->
           <svg class="iconRed" width="20" height="20" viewBox="0 0 24 24">
             <path d="M3 10.5l9-7 9 7"></path>
             <path d="M6.5 10.5V21h11V10.5"></path>
@@ -538,7 +539,6 @@ header button {
 
       <div class="menuItem" data-view="savedfiles">
         <div class="menuIcon">
-          <!-- folder -->
           <svg class="iconRed" width="20" height="20" viewBox="0 0 24 24">
             <path d="M3.5 6.5h6l2 2H20.5v9.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"></path>
           </svg>
@@ -551,7 +551,6 @@ header button {
 
       <div class="menuItem" data-view="maintenance">
         <div class="menuIcon">
-          <!-- wrench -->
           <svg class="iconRed" width="20" height="20" viewBox="0 0 24 24">
             <path d="M21 7.5a5.5 5.5 0 0 1-7.6 5.1l-7 7a2 2 0 0 1-2.8-2.8l7-7A5.5 5.5 0 0 1 16.5 3l-2.2 2.2 2.5 2.5z"></path>
           </svg>
@@ -564,7 +563,6 @@ header button {
 
       <div class="menuItem" data-view="snapshots">
         <div class="menuIcon">
-          <!-- save -->
           <svg class="iconRed" width="20" height="20" viewBox="0 0 24 24">
             <path d="M5 4h12l2 2v14H5z"></path>
             <path d="M8 4v6h8V4"></path>
@@ -578,7 +576,6 @@ header button {
 
       <div class="menuItem" data-view="settings">
         <div class="menuIcon">
-          <!-- info -->
           <svg class="iconRed" width="20" height="20" viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="9"></circle>
             <path d="M12 10.5v7"></path>
@@ -596,7 +593,6 @@ header button {
   <div class="topbar">
     <div class="toprow">
       <button class="hamburger" id="openDrawer" aria-label="Menu">
-        <!-- 3 lines -->
         <svg class="iconRed" width="22" height="22" viewBox="0 0 24 24">
           <path d="M5 7h14"></path>
           <path d="M5 12h14"></path>
@@ -611,10 +607,7 @@ header button {
   </div>
 
   <div class="wrap">
-
-    <!-- VIEW: Dashboard -->
     <div class="view show" id="view-dashboard">
-      <!-- Logo: tap to change -->
       <div class="logo" id="logoTap" title="Tap to change logo">
         <img id="logoImg" src="icon.png" alt="N54">
       </div>
@@ -630,7 +623,6 @@ header button {
       <div class="grid3">
         <div class="tile">
           <div class="tIcon">
-            <!-- clock -->
             <svg class="iconRed" width="26" height="26" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="8.5"></circle>
               <path d="M12 7.5v5l3.2 2"></path>
@@ -642,7 +634,6 @@ header button {
 
         <div class="tile">
           <div class="tIcon">
-            <!-- pin -->
             <svg class="iconRed" width="26" height="26" viewBox="0 0 24 24">
               <path d="M12 21s7-5.3 7-11a7 7 0 1 0-14 0c0 5.7 7 11 7 11z"></path>
               <circle cx="12" cy="10" r="2.3"></circle>
@@ -654,7 +645,6 @@ header button {
 
         <div class="tile">
           <div class="tIcon">
-            <!-- gauge -->
             <svg class="iconRed" width="26" height="26" viewBox="0 0 24 24">
               <path d="M4 16a8 8 0 0 1 16 0"></path>
               <path d="M12 12l4.6-2.4"></path>
@@ -673,7 +663,6 @@ header button {
       <div class="row3">
         <button class="miniBtn" id="btnAdjust">
           <span class="miniIcon">
-            <!-- pin -->
             <svg class="iconRed" width="18" height="18" viewBox="0 0 24 24">
               <path d="M12 21s7-5.3 7-11a7 7 0 1 0-14 0c0 5.7 7 11 7 11z"></path>
               <circle cx="12" cy="10" r="2.3"></circle>
@@ -684,7 +673,6 @@ header button {
 
         <button class="miniBtn" id="btnAddSub">
           <span class="miniIcon">
-            <!-- plus/minus -->
             <svg class="iconRed" width="18" height="18" viewBox="0 0 24 24">
               <path d="M6 8h8"></path>
               <path d="M10 4v8"></path>
@@ -696,7 +684,6 @@ header button {
 
         <button class="miniBtn" id="btnClear">
           <span class="miniIcon">
-            <!-- trash -->
             <svg class="iconRed" width="18" height="18" viewBox="0 0 24 24">
               <path d="M4 7h16"></path>
               <path d="M9 7V5h6v2"></path>
@@ -709,7 +696,6 @@ header button {
 
       <div class="hint">Runs on your device • localStorage • no account</div>
 
-      <!-- Maintenance stays on dashboard (you like this layout) -->
       <div class="card section" id="maintenanceSection">
         <div class="secHead">
           <div class="secTitle">Maintenance Reminders</div>
@@ -731,7 +717,6 @@ header button {
       </div>
     </div>
 
-    <!-- VIEW: Saved Files (NOT on dashboard anymore) -->
     <div class="view" id="view-savedfiles">
       <div class="card section">
         <div class="secHead">
@@ -753,7 +738,6 @@ header button {
       </div>
     </div>
 
-    <!-- VIEW placeholders -->
     <div class="view" id="view-maintenance">
       <div class="card section">
         <div class="secHead">
@@ -785,7 +769,6 @@ header button {
     </div>
   </div>
 
-  <!-- prompt modal -->
   <div class="prompt" id="prompt">
     <div class="promptCard">
       <div class="promptTop">
@@ -803,7 +786,6 @@ header button {
 (() => {
   const KEY = "n54_mileage_tracker_v3";
 
-  // state
   const state = load() || {
     engineMiles: 0,
     tripMiles: 0,
@@ -813,11 +795,10 @@ header button {
     lastPos: null,
     lastTime: null,
     reminders: [],
-    savedFiles: [], // {id,name,type,addedAt,text?,dataUrl?}
+    savedFiles: [],
     logoDataUrl: null
   };
 
-  // elements
   const elEngine = $("#engineMiles");
   const elTrip = $("#tripMiles");
   const elTotalTracked = $("#totalTracked");
@@ -831,17 +812,14 @@ header button {
   const btnAddSub = $("#btnAddSub");
   const btnClear = $("#btnClear");
 
-  // logo
   const logoTap = $("#logoTap");
   const logoImg = $("#logoImg");
 
-  // drawer
   const openDrawer = $("#openDrawer");
   const closeDrawer = $("#closeDrawer");
   const overlay = $("#overlay");
   const drawer = $("#drawer");
 
-  // views/menu
   const menu = $("#menu");
   const views = {
     dashboard: $("#view-dashboard"),
@@ -851,21 +829,18 @@ header button {
     settings: $("#view-settings")
   };
 
-  // maintenance
   const btnAddReminder = $("#btnAddReminder");
   const btnQuickDefaults = $("#btnQuickDefaults");
   const remList = $("#remList");
   const remCount = $("#remCount");
   const remEmpty = $("#remEmpty");
 
-  // saved files
   const fileCount = $("#fileCount");
   const savedFileList = $("#savedFileList");
   const btnPasteLog = $("#btnPasteLog");
   const btnUploadFile = $("#btnUploadFile");
   const filePicker = $("#filePicker");
 
-  // prompt + toast
   const prompt = $("#prompt");
   const promptTitle = $("#promptTitle");
   const promptBody = $("#promptBody");
@@ -873,13 +848,12 @@ header button {
   const promptClose = $("#promptClose");
   const toast = $("#toast");
 
-  // init
   applyLogo();
   render();
   renderReminders();
   renderFiles();
+  registerServiceWorker();
 
-  // drawer events
   openDrawer.addEventListener("click", () => setDrawer(true));
   closeDrawer.addEventListener("click", () => setDrawer(false));
   overlay.addEventListener("click", () => setDrawer(false));
@@ -888,13 +862,10 @@ header button {
     const item = e.target.closest(".menuItem");
     if(!item) return;
     const view = item.dataset.view;
-    // active styles
     $all(".menuItem", menu).forEach(x => x.classList.toggle("active", x === item));
-    // show view
     Object.entries(views).forEach(([k, el]) => el.classList.toggle("show", k === view));
     setDrawer(false);
 
-    // placeholders
     if(view !== "dashboard" && view !== "savedfiles" && view !== "maintenance"){
       showToast("Coming soon");
     }
@@ -905,7 +876,6 @@ header button {
     overlay.classList.toggle("show", open);
   }
 
-  // logo tap -> choose picture
   logoTap.addEventListener("click", async () => {
     const ok = await confirmPrompt("Change logo image?", "Pick any photo — this only changes the in-app logo (not the home screen icon).");
     if(!ok) return;
@@ -929,10 +899,8 @@ header button {
     logoImg.src = state.logoDataUrl || "icon.png";
   }
 
-  // tracking
   btnStart.addEventListener("click", async () => {
     if(!state.tracking){
-      // request permission
       try{
         await getOnePosition();
       }catch(err){
@@ -958,7 +926,6 @@ header button {
     render();
   });
 
-  // adjust miles (set)
   btnAdjust.addEventListener("click", async () => {
     const val = await numberPrompt("Set Engine Miles", "Enter the current engine miles:", state.engineMiles);
     if(val === null) return;
@@ -968,7 +935,6 @@ header button {
     showToast("Miles set");
   });
 
-  // add/sub miles
   btnAddSub.addEventListener("click", async () => {
     const val = await numberPrompt("Add/Subtract Miles", "Enter miles to add (use negative to subtract):", 0);
     if(val === null) return;
@@ -978,7 +944,6 @@ header button {
     showToast("Updated");
   });
 
-  // clear
   btnClear.addEventListener("click", async () => {
     const ok = await confirmPrompt("Clear all data?", "This wipes miles, trip, reminders, and saved files.");
     if(!ok) return;
@@ -986,7 +951,6 @@ header button {
     location.reload();
   });
 
-  // maintenance reminders
   btnAddReminder.addEventListener("click", async () => {
     const name = await textPrompt("Add Reminder", "Reminder name (e.g., Oil change):", "");
     if(!name) return;
@@ -1016,7 +980,6 @@ header button {
       ["Walnut blast", 45000]
     ];
     defaults.forEach(([name, interval]) => {
-      // avoid duplicates
       if(state.reminders.some(r => r.name.toLowerCase() === name.toLowerCase())) return;
       state.reminders.push({id: uid(), name, intervalMiles: interval, lastDoneMiles: state.engineMiles || 0, createdAt: Date.now()});
     });
@@ -1085,7 +1048,6 @@ header button {
     });
   }
 
-  // saved files (in menu)
   btnPasteLog.addEventListener("click", async () => {
     const name = await textPrompt("Log name", "Example: MHD log 2026-01-26", "MHD log");
     if(!name) return;
@@ -1109,9 +1071,6 @@ header button {
     filePicker.value = "";
     if(!file) return;
 
-    // For offline storage, keep it simple:
-    // - text/* and .csv -> store as text
-    // - others -> store as dataURL (base64) (works, but large files may be too big)
     let entry = { id: uid(), name: file.name, addedAt: Date.now() };
 
     if(file.type.startsWith("text/") || file.name.toLowerCase().endsWith(".csv") || file.name.toLowerCase().endsWith(".log")){
@@ -1175,7 +1134,6 @@ header button {
           if(f.type === "text"){
             await longTextPrompt("View file", f.name, f.text || "");
           }else{
-            // dataurl: open in new tab
             const w = window.open();
             if(w){
               w.document.write(`<iframe src="${f.dataUrl}" style="border:0;width:100%;height:100%"></iframe>`);
@@ -1199,7 +1157,6 @@ header button {
     });
   }
 
-  // runtime tick
   setInterval(() => {
     if(state.tracking){
       state.totalRuntimeSec += 1;
@@ -1208,7 +1165,6 @@ header button {
     }
   }, 1000);
 
-  // gps loop
   setInterval(async () => {
     if(!state.tracking) return;
     try{
@@ -1217,11 +1173,10 @@ header button {
       if(state.lastPos){
         const d = haversineMiles(state.lastPos.coords.latitude, state.lastPos.coords.longitude,
                                  pos.coords.latitude, pos.coords.longitude);
-        // basic sanity filter
-        if(d < 2.0){ // ignore crazy jumps
+        if(d < 2.0){
           state.tripMiles += d;
           state.totalTracked += d;
-          state.engineMiles += d; // auto-add to engine miles
+          state.engineMiles += d;
           save(state);
           render();
         }
@@ -1243,10 +1198,10 @@ header button {
 
     if(state.tracking){
       elStartLabel.textContent = "STOP TRACKING";
-      elGpsPill.textContent = "GPS: Running";
+      elGpsPill.textContent = navigator.onLine ? "GPS: Running" : "GPS: Offline";
     }else{
       elStartLabel.textContent = "START TRACKING";
-      elGpsPill.textContent = "GPS: Stopped";
+      elGpsPill.textContent = navigator.onLine ? "GPS: Stopped" : "GPS: Offline";
     }
   }
 
@@ -1254,7 +1209,6 @@ header button {
     elRuntime.textContent = hhmmss(state.totalRuntimeSec);
   }
 
-  // prompt helpers
   promptClose.addEventListener("click", () => hidePrompt());
   function hidePrompt(){ prompt.classList.remove("show"); }
 
@@ -1349,7 +1303,28 @@ header button {
     setTimeout(() => toast.classList.remove("show"), 1100);
   }
 
-  // helpers
+  function registerServiceWorker(){
+    if("serviceWorker" in navigator){
+      window.addEventListener("load", async () => {
+        try{
+          await navigator.serviceWorker.register("./sw.js");
+        }catch(e){
+          console.log("SW registration failed", e);
+        }
+      });
+    }
+  }
+
+  window.addEventListener("online", () => {
+    render();
+    showToast("Back online");
+  });
+
+  window.addEventListener("offline", () => {
+    render();
+    showToast("Offline mode");
+  });
+
   function $(sel){ return document.querySelector(sel); }
   function $all(sel, root=document){ return [...root.querySelectorAll(sel)]; }
 
@@ -1389,7 +1364,7 @@ header button {
   }
 
   function haversineMiles(lat1, lon1, lat2, lon2){
-    const R = 3958.7613; // miles
+    const R = 3958.7613;
     const toRad = d => d * Math.PI / 180;
     const dLat = toRad(lat2-lat1);
     const dLon = toRad(lon2-lon1);
